@@ -1,0 +1,14 @@
+# The build context is the directory *above* this app, because the image also builds the sibling
+# libraries it depends on. Keep the heavy, regenerable trees out of it.
+**/node_modules
+**/target
+**/out
+**/.git
+**/.bsp
+**/.bloop
+**/.metals
+
+# Generated mirrors: the image vendors these from their sources during the build, so a developer's
+# local copy must not ride along and win.
+**/website-static/vendor/taxpert/
+**/website-static/vendor/uswds-3.13.0/

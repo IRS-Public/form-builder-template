@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<?xml-model href="./FactDictionaryModule.rng"?>
+<FactDictionaryModule>
+  <Facts>
+    <!-- Every file in facts/ is loaded alphabetically and merged into one dictionary; on a
+         duplicate path the last definition wins. Split by domain, not by size. -->
+
+    <Fact path="/taxYearOptions">
+      <Description>The years this tool can answer for. An enum's options are themselves a fact, so
+        adding a year is a one-line change here rather than an edit in the flow.</Description>
+      <Derived>
+        <EnumOptions>
+          <String>2025</String>
+          <String>2024</String>
+        </EnumOptions>
+      </Derived>
+    </Fact>
+
+    <Fact path="/chosenTaxYear">
+      <Description>The year the taxpayer picked.</Description>
+      <Writable>
+        <Enum optionsPath="/taxYearOptions"/>
+      </Writable>
+    </Fact>
+
+    <Fact path="/hasChosenTaxYear">
+      <Description>True once /chosenTaxYear has been answered. The flow gates its later questions on
+        this, so a fresh page shows one question rather than all of them at once.</Description>
+      <Derived>
+        <IsComplete>
+          <Dependency path="/chosenTaxYear"/>
+        </IsComplete>
+      </Derived>
+    </Fact>
+
+    <Fact path="/taxYear">
+      <Description>The chosen year as a number, for arithmetic and for printing with fg-show. An
+        Enum is a set of option strings, not an Int, so the conversion is explicit.</Description>
+      <Derived>
+        <Switch>
+          <Case>
+            <When>
+              <Equal>
+                <Left>
+                  <Dependency path="/chosenTaxYear"/>
+                </Left>
+                <Right>
+                  <Enum optionsPath="/taxYearOptions">2025</Enum>
+                </Right>
+              </Equal>
+            </When>
+            <Then>
+              <Int>2025</Int>
+            </Then>
+          </Case>
+          <Case>
+            <When>
+              <True/>
+            </When>
+            <Then>
+              <Int>2024</Int>
+            </Then>
+          </Case>
+        </Switch>
+      </Derived>
+    </Fact>
+
+    <Fact path="/incomeLimit">
+      <Description>The income ceiling for this credit. A constant is an ordinary derived fact, which
+        is what lets the Inspect panel explain a threshold the same way it explains an answer.</Description>
+      <Derived>
+        <Dollar>50000</Dollar>
+      </Derived>
+    </Fact>
+  </Facts>
+</FactDictionaryModule>

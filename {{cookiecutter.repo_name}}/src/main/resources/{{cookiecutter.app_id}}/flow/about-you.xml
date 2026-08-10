@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<?xml-model href="./FlowConfig.rng"?>
+<FlowConfig>
+  <page title="About you" route="/">
+    <section>
+      <h2>About you</h2>
+      <p>Answer a couple of questions and we&#8217;ll tell you whether you qualify.</p>
+
+      <!-- Every question is an <fg-set> bound to a writable fact. The fact must already exist in
+           facts/*.xml — the build fails on a path that does not resolve, which is the point.
+
+           Authored text is extracted to locales/flow_en.yaml at build time and translated in
+           flow_es.yaml, so write natural English here, never an i18n key. -->
+      <fg-set path="/chosenTaxYear">
+        <question>Which tax year are you asking about?</question>
+        <modal-link for="modal-which-year">Which year should I use?</modal-link>
+        <input type="enum" options-path="/taxYearOptions">
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+        </input>
+      </fg-set>
+
+      <!-- if-true keeps the next question hidden until the previous one is answered. The condition
+           is a fact, not a DOM state, so it survives a reload and a scenario load alike. -->
+      <fg-set path="/isEligible" if-true="/hasChosenTaxYear">
+        <question>Did you live in the United States for more than half of <fg-show path="/taxYear"/>?</question>
+        <hint>Count any part of a day you were present.</hint>
+        <input type="boolean">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </input>
+      </fg-set>
+
+      <!-- knockout="true" blocks navigation while the condition holds; knockout="false" is
+           informational. A knockout is authored as a sibling of the question it judges. -->
+      <fg-alert alert-type="error" alert-key="must-live-in-us" knockout="true" condition="/isEligible" operator="isFalse">
+        <heading>You don&#8217;t qualify</heading>
+        <p class="usa-alert__text">
+          You must have lived in the United States for more than half of the year to claim this credit.
+        </p>
+      </fg-alert>
+
+      <fg-set path="/income" if-true="/isEligible">
+        <question>What was your total income in <fg-show path="/taxYear"/>?</question>
+        <input type="dollar"/>
+      </fg-set>
+    </section>
+
+    <!-- Modals come after every section in the page, and are opened by the modal-link above. -->
+    <modal-dialog id="modal-which-year">
+      <modal-heading>Which year should I use?</modal-heading>
+      <modal-content>
+        <p>Use the year you are filing a return for, not the year you are filing it in.</p>
+      </modal-content>
+    </modal-dialog>
+  </page>
+</FlowConfig>

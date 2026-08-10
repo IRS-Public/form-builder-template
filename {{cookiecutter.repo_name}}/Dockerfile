@@ -1,0 +1,80 @@
+# syntax=docker/dockerfile:1
+#
+# {{ cookiecutter.project_name }} — prod-like static image.
+#
+# The build context is the directory ABOVE this repository, because the image also builds the two
+# sibling libraries this app depends on and vendors the third:
+#
+#   stage 1 (libs)    : sbt publishLocal in ../fact-graph and ../formative  -> Ivy artifacts + main.mjs
+#   stage 2 (build)   : sbt run                                            -> static site in ./out
+#   stage 3 (runtime) : nginx serves ./out
+#
+#   docker build -f {{ cookiecutter.repo_name }}/Dockerfile -t {{ cookiecutter.repo_name }} ..
+#
+# There is no server at runtime: the generated site is fully static and the Taxpert workspace is
+# client-side JavaScript. Which developer surfaces exist is therefore decided at stage 2 by the
+# flags on `sbt run` — changing them means rebuilding this image. This one passes none, so the
+# image is the product and nothing else.
+
+# ---- shared sbt base --------------------------------------------------------------
+FROM eclipse-temurin:21-jdk-jammy AS sbt-base
+ARG SBT_VERSION=1.11.4
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl ca-certificates libxml2-utils git make \
+ && rm -rf /var/lib/apt/lists/* \
+ && curl -fsSL "https://github.com/sbt/sbt/releases/download/v${SBT_VERSION}/sbt-${SBT_VERSION}.tgz" \
+      | tar -xz -C /opt
+ENV PATH="/opt/sbt/bin:${PATH}"
+
+# ---- stage 1: build and publish the sibling libraries -----------------------------
+FROM sbt-base AS libs
+WORKDIR /build
+COPY fact-graph/ ./fact-graph/
+COPY formative/ ./formative/
+# The publishLocal output lands in /root/.ivy2/local — a real image layer, not a cache mount, so
+# stage 2 can copy it. The download caches are mounts because nothing later needs them.
+RUN --mount=type=cache,target=/root/.cache/coursier \
+    --mount=type=cache,target=/root/.sbt \
+    cd fact-graph && sbt compile fastOptJS publishLocal
+RUN --mount=type=cache,target=/root/.cache/coursier \
+    --mount=type=cache,target=/root/.sbt \
+    cd formative && sbt publishLocal
+
+# ---- stage 2: generate the static site --------------------------------------------
+FROM sbt-base AS build
+WORKDIR /build/{{ cookiecutter.repo_name }}
+COPY --from=libs /root/.ivy2 /root/.ivy2
+COPY {{ cookiecutter.repo_name }}/ ./
+
+# `make copy-fg`, without the Makefile: drop the freshly built Scala.js bundle into vendor/.
+COPY --from=libs \
+     /build/fact-graph/js/target/scala-3.3.6/factgraph-fastopt/main.mjs \
+     ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/fact-graph/factgraph-{{ cookiecutter.factgraph_version|replace('-SNAPSHOT', '') }}.js
+COPY --from=libs \
+     /build/fact-graph/js/target/scala-3.3.6/factgraph-fastopt/main.mjs.map \
+     ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/fact-graph/main.mjs.map
+
+# `make copy-shared-ui`. One COPY of the whole src/ tree rather than one per bundle: a hand-kept
+# list of bundles produced images whose UI was silently incomplete when a bundle was added and the
+# list was not. Wipe first — COPY merges into the destination rather than replacing it, so without
+# this a file renamed in the package could survive as a stale vendored copy.
+RUN rm -rf ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert
+COPY taxpert/src ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert
+
+# `make copy-uswds`. npm is only needed for this and for the linters, so it is installed here
+# rather than in the shared base.
+RUN --mount=type=cache,target=/root/.npm \
+    apt-get update && apt-get install -y --no-install-recommends nodejs npm \
+ && rm -rf /var/lib/apt/lists/* \
+ && npm --prefix ./src/main/resources/{{ cookiecutter.app_id }} install --omit=dev \
+ && make copy-uswds
+
+RUN --mount=type=cache,target=/root/.cache/coursier \
+    --mount=type=cache,target=/root/.sbt \
+    sbt run
+
+# ---- stage 3: runtime --------------------------------------------------------------
+FROM nginx:1.27-alpine AS runtime
+COPY {{ cookiecutter.repo_name }}/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /build/{{ cookiecutter.repo_name }}/out /usr/share/nginx/html
+EXPOSE 80

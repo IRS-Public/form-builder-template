@@ -1,0 +1,23 @@
+{
+  "project_name": "My Tax Tool",
+  "repo_name": "{{ cookiecutter.project_name|lower|replace(' ', '-') }}",
+  "app_id": "{{ cookiecutter.repo_name }}",
+  "url_segment": "{{ cookiecutter.repo_name }}",
+  "scala_package": "gov.irs.{{ cookiecutter.app_id|replace('-', '') }}",
+  "brand": "{{ cookiecutter.project_name }}",
+  "storage_prefix": "{{ cookiecutter.app_id }}",
+  "dev_port": "3010",
+  "formative_version": "0.1.0-SNAPSHOT",
+  "factgraph_version": "3.1.0-SNAPSHOT",
+  "include_all_screens": ["yes", "no"],
+  "include_scenario_mode": ["yes", "no"],
+  "include_taxpert_workspace": ["yes", "no"],
+  "include_docker": ["yes", "no"],
+
+  "__package_path": "{{ cookiecutter.scala_package.replace('.', '/') }}",
+  "__js_name": "{{ cookiecutter.app_id.split('-')[0] }}{{ cookiecutter.app_id.split('-')[1:] | map('capitalize') | join('') }}",
+
+  "_copy_without_render": [
+    "src/main/resources/*/website-static/img/*"
+  ]
+}

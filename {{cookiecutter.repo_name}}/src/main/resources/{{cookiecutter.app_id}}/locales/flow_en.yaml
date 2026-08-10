@@ -1,0 +1,45 @@
+# DO NOT EDIT, THIS IS A GENERATED FILE
+/:
+  title: About you
+  h2-4f21e0: About you
+  p-2f6020: Answer a couple of questions and we’ll tell you whether you qualify.
+  /chosenTaxYear:
+    question: Which tax year are you asking about?
+    modalLink: <modal-link for="modal-which-year">Which year should I use?</modal-link>
+    options:
+      '2025':
+        name: '2025'
+      '2024':
+        name: '2024'
+  /isEligible:
+    question: Did you live in the United States for more than half of <fg-show path="/taxYear"/>?
+    hint: Count any part of a day you were present.
+    options:
+      'true':
+        name: 'Yes'
+      'false':
+        name: 'No'
+  fg-alert-61e36b:
+    heading: You don’t qualify
+    p-ecc433: You must have lived in the United States for more than half of the year
+      to claim this credit.
+  /income:
+    question: What was your total income in <fg-show path="/taxYear"/>?
+  modal-which-year:
+    heading: Which year should I use?
+    p-b31c3d: Use the year you are filing a return for, not the year you are filing
+      it in.
+/results:
+  title: Results
+  h2-954d80: Your result
+  p-bfba88: Based on what you told us, you qualify for this credit for <fg-show path="/taxYear"/>.
+  fg-alert-4c3c37:
+    heading: Your income is over the limit
+    p-68a020: |-
+      Income of <fg-show path="/income"/> is above the <fg-show path="/incomeLimit"/> limit for
+                <fg-show path="/taxYear"/>, so you can’t claim this credit.
+  h3-cce78d: Next steps
+  p-6f4398: |-
+    Replace this page with whatever your tool should actually say. The
+            <a class="usa-link" target="_blank" href="https://www.irs.gov/">IRS website<span class="usa-sr-only"> (opens in a new tab)</span></a>
+            is a reasonable placeholder until then.

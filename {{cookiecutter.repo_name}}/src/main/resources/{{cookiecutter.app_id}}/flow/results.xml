@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-model href="./FlowConfig.rng"?>
+<FlowConfig>
+  <page title="Results" route="/results">
+    <section>
+      <h2>Your result</h2>
+
+      <!-- `condition` + `operator` on ordinary markup is how a page says something different
+           depending on the graph. It is evaluated in the browser on every fg-update, so the two
+           paragraphs below swap without a navigation. -->
+      <p condition="/qualifies" operator="isTrue">
+        Based on what you told us, you qualify for this credit for <fg-show path="/taxYear"/>.
+      </p>
+
+      <fg-alert alert-type="info" alert-key="over-the-limit" condition="/incomeWithinLimit" operator="isFalse">
+        <heading>Your income is over the limit</heading>
+        <p class="usa-alert__text">
+          Income of <fg-show path="/income"/> is above the <fg-show path="/incomeLimit"/> limit for
+          <fg-show path="/taxYear"/>, so you can&#8217;t claim this credit.
+        </p>
+      </fg-alert>
+
+      <h3>Next steps</h3>
+      <p>
+        Replace this page with whatever your tool should actually say. The
+        <a class="usa-link" target="_blank" href="https://www.irs.gov/">IRS website<span class="usa-sr-only"> (opens in a new tab)</span></a>
+        is a reasonable placeholder until then.
+      </p>
+    </section>
+  </page>
+</FlowConfig>

@@ -1,0 +1,15 @@
+/* {{ cookiecutter.project_name }}'s own styling.
+ *
+ * This file is imported after the theme, so an ordinary declaration here beats the theme's without
+ * `!important` and without a layer. Override a design token rather than a rule where you can — the
+ * theme is built on the variables in `vendor/taxpert/theme/styles/variables.css`, so redefining one
+ * on `:root` re-tints everything that uses it at once.
+ *
+ * Do not fork a file out of the vendored theme to change a value in it. The vendored copy is a
+ * generated mirror and `make check-shared-ui` will fail the build.
+ */
+
+:root {
+  /* Example: the accent the step indicator and links pick up.
+     --accent-cool-darker: #2c5a7a; */
+}

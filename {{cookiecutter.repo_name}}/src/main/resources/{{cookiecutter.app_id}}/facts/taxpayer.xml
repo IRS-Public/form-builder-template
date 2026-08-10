@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-model href="./FactDictionaryModule.rng"?>
+<FactDictionaryModule>
+  <Facts>
+    <Fact path="/isEligible">
+      <Description>The eligibility question the flow asks first. Replace this with whatever your
+        tool actually tests — it is here to give the knockout alert something to fire on.</Description>
+      <Writable>
+        <Boolean/>
+      </Writable>
+    </Fact>
+
+    <Fact path="/income">
+      <Description>Income for the year, in dollars.</Description>
+      <Writable>
+        <Dollar/>
+      </Writable>
+    </Fact>
+
+    <Fact path="/incomeWithinLimit">
+      <Description>Whether income is at or under the ceiling. Kept as its own fact rather than
+        folded into /qualifies: the Outcome tracker can then show which half of the test failed,
+        which is the whole reason to decompose a determination.</Description>
+      <Derived>
+        <LessThanOrEqual>
+          <Left>
+            <Dependency path="/income"/>
+          </Left>
+          <Right>
+            <Dependency path="/incomeLimit"/>
+          </Right>
+        </LessThanOrEqual>
+      </Derived>
+    </Fact>
+
+    <Fact path="/qualifies">
+      <Description>The determination. Incomplete until both inputs are answered, which is what the
+        Outcome tracker's part-drawn ring is showing before then.</Description>
+      <Derived>
+        <All>
+          <Dependency path="/isEligible"/>
+          <Dependency path="/incomeWithinLimit"/>
+        </All>
+      </Derived>
+    </Fact>
+  </Facts>
+</FactDictionaryModule>

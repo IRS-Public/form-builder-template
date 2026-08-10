@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: {{ cookiecutter.repo_name }}
+
+      # The libraries this app is built on are not published to a remote yet, so CI checks them out
+      # beside this repository and publishes them locally — the same contract `make bootstrap`
+      # encodes for a developer. Repoint these three at wherever they actually live, or delete them
+      # once the artifacts are published somewhere CI can resolve.
+      - uses: actions/checkout@v4
+        with:
+          repository: your-org/fact-graph
+          path: fact-graph
+      - uses: actions/checkout@v4
+        with:
+          repository: your-org/formative
+          path: formative
+      - uses: actions/checkout@v4
+        with:
+          repository: your-org/taxpert
+          path: taxpert
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # xmllint, for `make validate-xml`.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxml2-utils
+
+      - name: Publish the sibling libraries
+        working-directory: {{ cookiecutter.repo_name }}
+        run: |
+          make -C ../fact-graph publish
+          cd ../formative && sbt publishLocal
+
+      - name: Install the JS tooling
+        working-directory: {{ cookiecutter.repo_name }}
+        run: make ci-setup
+
+      - name: Tests
+        working-directory: {{ cookiecutter.repo_name }}
+        run: make test
+
+      # Builds the site, then checks the vendored mirror, the XML against both RELAX NG schemas,
+      # the generated HTML, the JavaScript and the Scala formatting.
+      - name: CI checks
+        working-directory: {{ cookiecutter.repo_name }}
+        run: make ci
