@@ -10,7 +10,7 @@
 // Spanish build, because website-static/ is served verbatim and never passes through Thymeleaf.
 
 import { windowFactGraphAdapter } from '../../vendor/taxpert/shared/js/graph-adapter.js'
-import { saveFactGraph } from '../../vendor/taxpert/flow-runtime/js/flow-runtime.js'
+import { saveFactGraph } from '../../vendor/formative/flow-runtime/js/flow-runtime.js'
 
 /**
  * The fact-graph port for this application.

@@ -20,18 +20,32 @@ pipx install cookiecutter        # or: pip install cookiecutter
 cookiecutter formative-template
 ```
 
-The generated app expects the three libraries checked out beside it:
+The generated app expects the libraries checked out beside it — three with the workspace, two without
+(`taxpert` is the optional one; the theme and the flow runtime ship inside the `formative` jar):
 
 ```
 parent/
 ├── fact-graph/
 ├── formative/
-├── taxpert/
+├── taxpert/            ← only with include_taxpert_workspace=yes
 └── hello-tax/          ← generated
     make bootstrap && make dev
 ```
 
 Then `http://localhost:3010/app/hello-tax/`.
+
+### Seeing it in Fact Explorer
+
+With `include_fact_explorer=yes` the generated repo ships a `fact-explorer.app.json`, and that file
+**is** the registration — Fact Explorer's `build-registry` globs `../*/fact-explorer.app.json`, so
+putting the repo beside `fact-explorer/` is the whole of the wiring. There is no list to edit, and
+the generator writes nothing outside the repo it creates.
+
+```bash
+cd hello-tax && make fact-explorer
+cd ../fact-explorer && npm run build-registry && npm run dev
+# → http://localhost:5180/fact-explorer/hello-tax
+```
 
 ## The questions
 
@@ -48,8 +62,9 @@ Then `http://localhost:3010/app/hello-tax/`.
 | `formative_version`, `factgraph_version` | `…-SNAPSHOT` | swap for a released version once these are published |
 | `include_all_screens` | `yes` | the generated page that lists every screen at once |
 | `include_scenario_mode` | `yes` | saved fact graphs, loadable from the Scenario modal |
-| `include_taxpert_workspace` | `yes` | the global nav, audit panel and tool dock (`--auditMode`); `taxpert` stays a dependency either way for its flow runtime and theme |
-| `include_docker` | `yes` | `Dockerfile` + `nginx.conf` for a prod-like static image |
+| `include_taxpert_workspace` | `yes` | the global nav, audit panel and tool dock (`--auditMode`). **`no` drops `taxpert` entirely** — the npm dependency, the root `package.json`, the `copy-shared-ui`/`check-shared-ui` targets, the workspace stylesheets and mount fragments. The theme and the flow runtime are unaffected: both ship inside the `formative` jar |
+| `include_fact_explorer` | `yes` | a `fact-explorer.app.json` describing this app to Fact Explorer, plus a `make fact-explorer` target and the `--formativeGraph` build flag that emits the graph it reads. **Independent of the workspace answer** — Fact Explorer reads the graph, fact dictionary and engine bundle, all of which are the scaffold's, so `fact-explorer=yes / workspace=no` is a supported combination |
+| `include_docker` | `yes` | `Dockerfile` + `nginx.conf` for a prod-like static image, plus `docker-compose.yml` / `docker-compose.override.yml` and the `make up`/`down`/`logs`/`ps`/`rebuild` targets that wrap them. The overlay runs `sbt ~run` in a second container writing into the volume nginx serves, so an edit on the host regenerates the site with no local JDK, sbt or node. |
 
 **`repo_name`, `app_id`, `url_segment` and `storage_prefix` are independent on purpose**, even
 though one answer sets all four. credit-assistant is the proof they have to be: it lives in

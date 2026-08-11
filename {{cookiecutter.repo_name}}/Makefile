@@ -56,6 +56,42 @@ site: copy-fg copy-shared-ui copy-uswds ## Build the site for production, into .
 	@# baked in at build time. A production build is the flow and nothing else.
 	sbt run
 
+# ── Docker ────────────────────────────────────────────────────────────────────
+#
+# The same app, without a local JDK, sbt or node: `make up` builds the sibling libraries, generates
+# the site and serves it, and the dev overlay leaves a `sbt ~run` watcher regenerating it on every
+# edit. Slower to start than `make dev` and the only way in for someone who has not installed the
+# toolchain — which is most people the first time they open this repo.
+#
+# These wrap docker compose rather than replacing it: the compose files are the description, and a
+# target that hid them would be one more thing to read before you could use either.
+
+.PHONY: up
+up: ## Build (first run) and start the whole stack, with hot reload
+	docker compose up --build
+
+.PHONY: down
+down: ## Stop and remove the stack
+	docker compose down
+
+.PHONY: logs
+logs: ## Tail the logs from every service
+	docker compose logs -f
+
+.PHONY: ps
+ps: ## Show service status
+	docker compose ps
+
+.PHONY: rebuild
+rebuild: ## Tear down the stack, drop its volumes, and rebuild images from scratch, ignoring the layer cache
+	@# The escape hatch for a stale sibling library: ../formative and ../fact-graph are resolved
+	@# from the image's own Ivy cache, not the bind mount, so editing them needs a rebuild.
+	@# down -v first: app-out and sbt-cache persist across a plain `down`/`up`, so a stale sbt
+	@# cache or a half-regenerated out/ would otherwise survive a "from scratch" rebuild. Compose
+	@# recreates both empty on the next `up`, at which point the watcher repopulates them.
+	docker compose down -v
+	docker compose build --no-cache
+
 .PHONY: copy-fg
 copy-fg: ## Copy the compiled Fact Graph bundle from the sibling repository
 	@# Skipped rather than fatal when the sibling has not been built: this runs ahead of every
@@ -79,8 +115,14 @@ copy-shared-ui: ## Regenerate the vendored taxpert mirror from node_modules
 	# Wipe first so a renamed or removed source file never lingers as a stale vendored copy, and
 	# copy whatever bundles src/ contains rather than naming them — adding a bundle to taxpert
 	# should not need an edit here to reach the browser.
-	rm -rf $(SHARED_UI_TARGET)
+	@# Emptied rather than removed, and that is not a style choice. docker-compose.override.yml
+	@# bind-mounts taxpert/src over this exact directory, and Docker Desktop stamps a
+	@# `user:<you> deny delete` ACL on any host directory it has mounted — so `rm -rf` on the
+	@# directory itself fails with "Permission denied" *after* recursively deleting everything
+	@# inside it, leaving an empty mirror and a failed build. Clearing the contents does the same
+	@# job, keeps the mount point the compose file needs, and works whether or not the stack is up.
 	mkdir -p $(SHARED_UI_TARGET)
+	find $(SHARED_UI_TARGET) -mindepth 1 -delete
 	cp -R $(SHARED_UI_SRC)/. $(SHARED_UI_TARGET)/
 
 .PHONY: copy-uswds
@@ -144,6 +186,7 @@ ci: ## Run the CI checks locally
 	$(MAKE) check-shared-ui
 	$(MAKE) validate-xml
 	$(MAKE) validate-html
+	$(MAKE) validate-templates
 	$(MAKE) validate-js
 	$(MAKE) validate-scala
 
@@ -159,6 +202,21 @@ validate-xml: ## Validate the .xml files against their RELAX NG schemas
 validate-html: ## Validate the generated .html files
 	npm --prefix $(RESOURCES_DIR) run html-validate -- "$(HTML_VALIDATE_TARGET)"
 
+.PHONY: validate-templates
+validate-templates: ## Reject HTML comments inside inline <script> blocks
+	@# `<!-- … -->` is a legal, ignored token in a classic script and a *syntax error* in a module
+	@# ("HTML comments are not allowed in modules"). fragments/taxpert-config.html is one long
+	@# inline module, and one HTML comment in it takes down the whole configure() call: the nav
+	@# renders with no menu, Workspace settings lists no feature flags, and no tool buttons appear.
+	@# Nothing shows in the build output — html-validate does not look inside script bodies.
+	@# A line already inside a `//` comment is prose about the hazard, not the hazard.
+	@bad=$$(find $(RESOURCES_DIR)/templates -name '*.html' -print0 \
+		| xargs -0 awk '/<script/{ins=1} /<\/script>/{ins=0} \
+			ins && /<!--/ && $$0 !~ /^[[:space:]]*(\/\/|\*)/ {print FILENAME":"FNR": "$$0}'); \
+	if [ -n "$$bad" ]; then \
+		echo "==> HTML comment inside a <script> — use // instead:"; echo "$$bad"; exit 1; \
+	fi
+
 .PHONY: validate-js
 validate-js: ## Run the JavaScript linter
 	npm --prefix $(RESOURCES_DIR) run lint
@@ -170,3 +228,14 @@ validate-scala: ## Check the Scala formatting
 .PHONY: diff-out
 diff-out: ## Diff this branch's generated site against `main`
 	./scripts/diff-out.sh
+
+.PHONY: fact-explorer
+fact-explorer: ## Build with the Formative Graph and print this app's Fact Explorer URL
+	@# Deliberately not folded into `dev`. Fact Explorer prefers an app-served graph wherever it finds
+	@# one, and the Scala generator is still catching up with fact-explorer's own node generator, so
+	@# building with --formativeGraph by default would hand Fact Explorer the sparser of the two graphs.
+	$(MAKE) copy-fg copy-shared-ui copy-uswds
+	sbt 'run --formativeGraph'
+	@echo "==> regenerate Fact Explorer's registry, then open:"
+	@echo "    cd ../fact-explorer && npm run build-registry && npm run dev"
+	@echo "    http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}"

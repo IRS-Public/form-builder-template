@@ -1,0 +1,63 @@
+# Development overlay — Docker Compose auto-merges this on top of docker-compose.yml.
+#
+#   docker compose up --build                          # this file applies
+#   docker compose -f docker-compose.yml up --build     # ignore it, build the prod-like image
+#
+# Edit source on the host and the site regenerates inside the container; then refresh the browser.
+#
+# WHY THIS IS TWO SERVICES. The static-site generator has no browser hot-module-reload — there is no
+# dev server, only a directory of HTML. So the job is split: nginx serves whatever is in the shared
+# `out` volume, and a second container runs `sbt ~run` writing into that same volume on every source
+# edit. Neither half works alone; adding the volume without the watcher leaves nginx serving an
+# empty directory, which looks like a broken build rather than a missing service.
+#
+# macOS bind mounts do not emit filesystem events, so sbt's watcher is left on its polling default
+# rather than relying on native notifications.
+
+services:
+  # nginx now serves a live-regenerated volume instead of the site baked into the image.
+  {{ cookiecutter.repo_name }}:
+    volumes:
+      - app-out:/usr/share/nginx/html
+
+  # The watcher. `target: build` stops at the stage that has sbt, the sibling libraries in the local
+  # Ivy cache and the vendored assets already in place — the image's own `sbt run` at that stage
+  # doubles as a warm compile cache, so the first `~run` here is seconds rather than minutes.
+  #
+  # The flags mirror `make dev` minus --serve: the in-process server binds localhost inside the
+  # container and would not be reachable through a published port, so nginx above does the serving.
+  # Keep the two in step — a flag added to `make dev` and not here is a surface that exists natively
+  # and silently does not exist in Docker.
+  {{ cookiecutter.repo_name }}-watch:
+    build:
+      context: ..
+      dockerfile: {{ cookiecutter.repo_name }}/Dockerfile
+      target: build
+    working_dir: /build/{{ cookiecutter.repo_name }}
+    environment:
+      SBT_OPTS: "-Xmx2g"
+    command: ["sbt", "~run --auditMode --allScreens --scenarioMode"]
+    volumes:
+      # The directory ABOVE this repo, not just this repo: the build context is the parent, so the
+      # paths inside the container match the ones the Dockerfile used.
+      - ..:/build
+      - app-out:/build/{{ cookiecutter.repo_name }}/out
+      # Named, so a rebuild does not re-download every dependency.
+      - sbt-cache:/root/.cache/coursier
+
+      # Live shared-UI source over the baked-in `make copy-shared-ui` mirror, so an edit in
+      # ../taxpert shows up here without an image rebuild. One mount of the whole tree rather than
+      # one per bundle: a per-bundle list is a copy of that package's directory listing that nothing
+      # keeps in step, and a bundle missing from it is invisible until someone wonders why their
+      # edits do nothing.
+      - ../taxpert/src:/build/{{ cookiecutter.repo_name }}/src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert:ro
+
+    restart: unless-stopped
+
+  # Mounting the parent does NOT make the two Scala libraries live: sbt resolves them out of
+  # /root/.ivy2, which the image's publishLocal stage baked in and which is outside /build. Editing
+  # ../formative or ../fact-graph still needs `docker compose build`.
+
+volumes:
+  app-out:
+  sbt-cache:

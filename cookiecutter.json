@@ -12,6 +12,7 @@
   "include_all_screens": ["yes", "no"],
   "include_scenario_mode": ["yes", "no"],
   "include_taxpert_workspace": ["yes", "no"],
+  "include_fact_explorer": ["yes", "no"],
   "include_docker": ["yes", "no"],
 
   "__package_path": "{{ cookiecutter.scala_package.replace('.', '/') }}",

@@ -78,6 +78,35 @@
                 ],
             },
 
+            // The applications this workspace can be switched between — the "Applications" section
+            // of Workspace settings (the nav's gear). One entry, because a generated app starts out
+            // as the only one it knows about, and the section hides itself when there is nothing to
+            // switch to.
+            //
+            // Add a sibling by appending an entry with that app's own destinations. They have to be
+            // written out: the workspace ships no notion of what 'browse-all' means as a URL, and an
+            // app served from another origin cannot be derived from a base path. Use absolute URLs
+            // for a sibling — this app's server serves only this app, so a relative path to another
+            // would 404 — and keep our own root-relative so they survive being read through
+            // Fact Explorer's dev proxy.
+            //
+            // Switching keeps the destination: Browse All here goes to Browse All there, falling
+            // back to the sibling's first destination when it has no counterpart.
+            apps: {
+                current: '{{ cookiecutter.app_id }}',
+                items: [
+                    {
+                        id: '{{ cookiecutter.app_id }}',
+                        label: [[#{layout.title}]],
+                        destinations: [
+                            { id: 'product-experience', label: [[#{workspace.nav.product-experience}]], href: /*[[|${basePath}/|]]*/ '' },
+                            { id: 'browse-all', label: [[#{workspace.nav.browse-all}]], href: /*[[|${basePath}/all-screens/|]]*/ '' },
+                            { id: 'path-mode', label: [[#{workspace.nav.path-mode}]], href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
+                        ],
+                    },
+                ],
+            },
+
             endpoints: {
                 basePath: /*[[${basePath}]]*/ '',
                 scenariosBase: /*[[|${basePath}/resources/scenarios|]]*/ '',

@@ -25,6 +25,10 @@ val app: FormativeApp = FormativeApp(
   ),
   defaultPort = {{ cookiecutter.dev_port }},
   brand = "{{ cookiecutter.brand }}",
+  // Namespaces every browser storage key this site writes, so this app and any other Formative app
+  // served from the same origin do not rehydrate each other's fact graph out of one sessionStorage.
+  // The scaffold renders it into every page's <head>, whether or not the workspace is built in.
+  storagePrefix = Some("{{ cookiecutter.storage_prefix }}"),
 
   // Two extension points are left empty here, and both take a registration rather than a fork:
   //
