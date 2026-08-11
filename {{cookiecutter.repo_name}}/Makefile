@@ -10,7 +10,7 @@ FLOW_CONFIG := $(FLOW_DIR)/FlowConfig.rng
 FACTS_DIR := $(RESOURCES_DIR)/facts
 FACTS_CONFIG := $(FACTS_DIR)/FactDictionaryModule.rng
 
-FG_SOURCE_DIR := ../fact-graph/js/target/scala-3.3.6/factgraph-fastopt
+FG_SOURCE_DIR := {{ cookiecutter.fact_graph_path }}/js/target/scala-3.3.6/factgraph-fastopt
 FG_TARGET_DIR := $(RESOURCES_DIR)/website-static/vendor/fact-graph
 
 SHARED_UI_SRC := node_modules/taxpert/src
@@ -25,11 +25,12 @@ help: ## Print the help documentation
 
 .PHONY: bootstrap
 bootstrap: ## One-time setup: publish the sibling libraries and vendor their assets
-	@# This app depends on three checkouts that sit beside it — fact-graph and formative through
-	@# the local Ivy cache, taxpert through a file: npm dependency. Nothing is published to a
-	@# remote yet, so a fresh clone has to build them once before it can build itself.
-	$(MAKE) -C ../fact-graph publish
-	cd ../formative && sbt publishLocal
+	@# fact-graph and formative are resolved through the local Ivy cache, taxpert through a file:
+	@# npm dependency. None of the three is published to a remote yet, and none is guaranteed to
+	@# sit beside this repo (see fact_graph_path / formative_path / taxpert_path in
+	@# cookiecutter.json) — a fresh clone has to build them once before it can build itself.
+	$(MAKE) -C {{ cookiecutter.fact_graph_path }} publish
+	cd {{ cookiecutter.formative_path }} && sbt publishLocal
 	npm install
 	npm --prefix $(RESOURCES_DIR) install
 	$(MAKE) copy-fg copy-shared-ui copy-uswds
@@ -84,8 +85,8 @@ ps: ## Show service status
 
 .PHONY: rebuild
 rebuild: ## Tear down the stack, drop its volumes, and rebuild images from scratch, ignoring the layer cache
-	@# The escape hatch for a stale sibling library: ../formative and ../fact-graph are resolved
-	@# from the image's own Ivy cache, not the bind mount, so editing them needs a rebuild.
+	@# The escape hatch for a stale sibling library: formative and fact-graph are resolved from
+	@# the image's own Ivy cache, not a bind mount, so editing either one needs a rebuild.
 	@# down -v first: app-out and sbt-cache persist across a plain `down`/`up`, so a stale sbt
 	@# cache or a half-regenerated out/ would otherwise survive a "from scratch" rebuild. Compose
 	@# recreates both empty on the next `up`, at which point the watcher repopulates them.
@@ -103,7 +104,7 @@ copy-fg: ## Copy the compiled Fact Graph bundle from the sibling repository
 		echo "==> copied the fact-graph bundle from $(FG_SOURCE_DIR)"; \
 	else \
 		echo "==> no build at $(FG_SOURCE_DIR); keeping the vendored fact-graph bundle"; \
-		echo "    (run 'cd ../fact-graph && sbt fastOptJS' to refresh it)"; \
+		echo "    (run 'cd {{ cookiecutter.fact_graph_path }} && sbt fastOptJS' to refresh it)"; \
 	fi
 
 .PHONY: copy-shared-ui

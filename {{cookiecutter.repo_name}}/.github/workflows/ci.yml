@@ -14,9 +14,13 @@ jobs:
           path: {{ cookiecutter.repo_name }}
 
       # The libraries this app is built on are not published to a remote yet, so CI checks them out
-      # beside this repository and publishes them locally — the same contract `make bootstrap`
-      # encodes for a developer. Repoint these three at wherever they actually live, or delete them
-      # once the artifacts are published somewhere CI can resolve.
+      # and publishes them locally — the same contract `make bootstrap` encodes for a developer.
+      # Repoint these three at wherever they actually live, or delete them once the artifacts are
+      # published somewhere CI can resolve. Their `path:` here and fact_graph_path / formative_path
+      # / taxpert_path in cookiecutter.json describe the same three checkouts from two different
+      # vantage points — this runner's workspace root vs. this app's own directory — so a `path:`
+      # changed here needs the matching cookiecutter answer changed to match (and vice versa), or
+      # the `make -C` calls below resolve to nothing.
       - uses: actions/checkout@v4
         with:
           repository: your-org/fact-graph
@@ -46,8 +50,8 @@ jobs:
       - name: Publish the sibling libraries
         working-directory: {{ cookiecutter.repo_name }}
         run: |
-          make -C ../fact-graph publish
-          cd ../formative && sbt publishLocal
+          make -C {{ cookiecutter.fact_graph_path }} publish
+          cd {{ cookiecutter.formative_path }} && sbt publishLocal
 
       - name: Install the JS tooling
         working-directory: {{ cookiecutter.repo_name }}

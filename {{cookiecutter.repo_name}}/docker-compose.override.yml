@@ -30,33 +30,36 @@ services:
   # and silently does not exist in Docker.
   {{ cookiecutter.repo_name }}-watch:
     build:
-      context: ..
-      dockerfile: {{ cookiecutter.repo_name }}/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       target: build
+      additional_contexts:
+        fact_graph: {{ cookiecutter.fact_graph_path }}
+        formative: {{ cookiecutter.formative_path }}
+        taxpert: {{ cookiecutter.taxpert_path }}
     working_dir: /build/{{ cookiecutter.repo_name }}
     environment:
       SBT_OPTS: "-Xmx2g"
     command: ["sbt", "~run --auditMode --allScreens --scenarioMode"]
     volumes:
-      # The directory ABOVE this repo, not just this repo: the build context is the parent, so the
-      # paths inside the container match the ones the Dockerfile used.
-      - ..:/build
+      # This app's own source, live — sbt's watcher picks up an edit on the host immediately.
+      - .:/build/{{ cookiecutter.repo_name }}
       - app-out:/build/{{ cookiecutter.repo_name }}/out
       # Named, so a rebuild does not re-download every dependency.
       - sbt-cache:/root/.cache/coursier
 
       # Live shared-UI source over the baked-in `make copy-shared-ui` mirror, so an edit in
-      # ../taxpert shows up here without an image rebuild. One mount of the whole tree rather than
-      # one per bundle: a per-bundle list is a copy of that package's directory listing that nothing
-      # keeps in step, and a bundle missing from it is invisible until someone wonders why their
-      # edits do nothing.
-      - ../taxpert/src:/build/{{ cookiecutter.repo_name }}/src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert:ro
+      # {{ cookiecutter.taxpert_path }} shows up here without an image rebuild. One mount of the
+      # whole tree rather than one per bundle: a per-bundle list is a copy of that package's
+      # directory listing that nothing keeps in step, and a bundle missing from it is invisible
+      # until someone wonders why their edits do nothing.
+      - {{ cookiecutter.taxpert_path }}/src:/build/{{ cookiecutter.repo_name }}/src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert:ro
 
     restart: unless-stopped
 
-  # Mounting the parent does NOT make the two Scala libraries live: sbt resolves them out of
-  # /root/.ivy2, which the image's publishLocal stage baked in and which is outside /build. Editing
-  # ../formative or ../fact-graph still needs `docker compose build`.
+  # fact-graph and formative are NOT live-mounted: sbt resolves them out of /root/.ivy2, which the
+  # image's publishLocal stage (see additional_contexts above) baked in during the build. Editing
+  # either one still needs `docker compose build`.
 
 volumes:
   app-out:

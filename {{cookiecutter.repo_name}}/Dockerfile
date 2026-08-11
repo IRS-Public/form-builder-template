@@ -2,19 +2,29 @@
 #
 # {{ cookiecutter.project_name }} — prod-like static image.
 #
-# The build context is the directory ABOVE this repository, because the image also builds the two
-# sibling libraries this app depends on and vendors the third:
+# The build context is this repository itself. fact-graph, formative and taxpert are not
+# guaranteed to sit beside it, so each is supplied as its own named build context instead of a
+# subdirectory of a shared parent — docker-compose.yml passes the paths this app was generated with
+# (fact_graph_path / formative_path / taxpert_path in cookiecutter.json) via `additional_contexts`.
+# Building with plain `docker build` needs the same three paths spelled out by hand:
 #
-#   stage 1 (libs)    : sbt publishLocal in ../fact-graph and ../formative  -> Ivy artifacts + main.mjs
-#   stage 2 (build)   : sbt run                                            -> static site in ./out
+#   docker build \
+#     --build-context fact_graph={{ cookiecutter.fact_graph_path }} \
+#     --build-context formative={{ cookiecutter.formative_path }} \
+#     --build-context taxpert={{ cookiecutter.taxpert_path }} \
+#     -t {{ cookiecutter.repo_name }} .
+#
+#   stage 1 (libs)    : sbt publishLocal in fact-graph and formative -> Ivy artifacts + main.mjs
+#   stage 2 (build)   : sbt run                                      -> static site in ./out
 #   stage 3 (runtime) : nginx serves ./out
-#
-#   docker build -f {{ cookiecutter.repo_name }}/Dockerfile -t {{ cookiecutter.repo_name }} ..
 #
 # There is no server at runtime: the generated site is fully static and the Taxpert workspace is
 # client-side JavaScript. Which developer surfaces exist is therefore decided at stage 2 by the
 # flags on `sbt run` — changing them means rebuilding this image. This one passes none, so the
 # image is the product and nothing else.
+#
+# Each additional context keeps its own .dockerignore, not this repo's — a sibling library with a
+# heavy target/ or node_modules/ and no .dockerignore of its own transfers it into the build.
 
 # ---- shared sbt base --------------------------------------------------------------
 FROM eclipse-temurin:21-jdk-jammy AS sbt-base
@@ -29,8 +39,8 @@ ENV PATH="/opt/sbt/bin:${PATH}"
 # ---- stage 1: build and publish the sibling libraries -----------------------------
 FROM sbt-base AS libs
 WORKDIR /build
-COPY fact-graph/ ./fact-graph/
-COPY formative/ ./formative/
+COPY --from=fact_graph . ./fact-graph/
+COPY --from=formative . ./formative/
 # The publishLocal output lands in /root/.ivy2/local — a real image layer, not a cache mount, so
 # stage 2 can copy it. The download caches are mounts because nothing later needs them.
 RUN --mount=type=cache,target=/root/.cache/coursier \
@@ -44,7 +54,7 @@ RUN --mount=type=cache,target=/root/.cache/coursier \
 FROM sbt-base AS build
 WORKDIR /build/{{ cookiecutter.repo_name }}
 COPY --from=libs /root/.ivy2 /root/.ivy2
-COPY {{ cookiecutter.repo_name }}/ ./
+COPY . ./
 
 # `make copy-fg`, without the Makefile: drop the freshly built Scala.js bundle into vendor/.
 COPY --from=libs \
@@ -59,7 +69,7 @@ COPY --from=libs \
 # list was not. Wipe first — COPY merges into the destination rather than replacing it, so without
 # this a file renamed in the package could survive as a stale vendored copy.
 RUN rm -rf ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert
-COPY taxpert/src ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert
+COPY --from=taxpert src ./src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert
 
 # `make copy-uswds`. npm is only needed for this and for the linters, so it is installed here
 # rather than in the shared base.
@@ -75,6 +85,6 @@ RUN --mount=type=cache,target=/root/.cache/coursier \
 
 # ---- stage 3: runtime --------------------------------------------------------------
 FROM nginx:1.27-alpine AS runtime
-COPY {{ cookiecutter.repo_name }}/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /build/{{ cookiecutter.repo_name }}/out /usr/share/nginx/html
 EXPOSE 80

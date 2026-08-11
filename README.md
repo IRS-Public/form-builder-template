@@ -20,15 +20,23 @@ pipx install cookiecutter        # or: pip install cookiecutter
 cookiecutter formative-template
 ```
 
-The generated app expects the libraries checked out beside it — three with the workspace, two without
-(`taxpert` is the optional one; the theme and the flow runtime ship inside the `formative` jar):
+The generated app always lands beside `formative-template/` — the `repo_name` you answer with,
+never nested inside the template — regardless of which directory you ran `cookiecutter` from; the
+post-gen hook detects and corrects the one case that would nest it (running from inside
+`formative-template/` itself, where cookiecutter's default output directory is `.`).
+
+The generated app expects three libraries — two with the workspace, one fewer without (`taxpert` is
+the optional one; the theme and the flow runtime ship inside the `formative` jar) — at whatever
+paths you answer `fact_graph_path` / `formative_path` / `taxpert_path` with. **They are not assumed
+to sit beside the generated app** — each defaults to the sibling form (`../fact-graph`, etc.) but
+can be any relative or absolute path, independently:
 
 ```
 parent/
 ├── fact-graph/
 ├── formative/
 ├── taxpert/            ← only with include_taxpert_workspace=yes
-└── hello-tax/          ← generated
+└── hello-tax/          ← generated, with the three defaults above
     make bootstrap && make dev
 ```
 
@@ -60,6 +68,7 @@ cd ../fact-explorer && npm run build-registry && npm run dev
 | `storage_prefix` | = `app_id` | namespaces every browser storage key the workspace writes |
 | `dev_port` | `3010` | |
 | `formative_version`, `factgraph_version` | `…-SNAPSHOT` | swap for a released version once these are published |
+| `fact_graph_path`, `formative_path`, `taxpert_path` | `../fact-graph`, `../formative`, `../taxpert` | where each library actually lives, resolved from the generated app's own directory. Independent of one another and not assumed to be siblings of this app or of each other — an absolute path works too. Threaded through `Makefile`, `package.json` (the `taxpert` `file:` dependency), `docker-compose.yml` / `docker-compose.override.yml` (as named `additional_contexts`) and `.github/workflows/ci.yml` (whose checkout `path:`s must be kept in step by hand if you move a library off the default sibling layout) |
 | `include_all_screens` | `yes` | the generated page that lists every screen at once |
 | `include_scenario_mode` | `yes` | saved fact graphs, loadable from the Scenario modal |
 | `include_taxpert_workspace` | `yes` | the global nav, audit panel and tool dock (`--auditMode`). **`no` drops `taxpert` entirely** — the npm dependency, the root `package.json`, the `copy-shared-ui`/`check-shared-ui` targets, the workspace stylesheets and mount fragments. The theme and the flow runtime are unaffected: both ship inside the `formative` jar |

@@ -9,6 +9,7 @@ answers arrive as literals below and why nothing here may contain a Jinja delimi
 included.
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -21,11 +22,37 @@ REPO_NAME = "{{ cookiecutter.repo_name }}"
 APP_ID = "{{ cookiecutter.app_id }}"
 URL_SEGMENT = "{{ cookiecutter.url_segment }}"
 DEV_PORT = "{{ cookiecutter.dev_port }}"
+FACT_GRAPH_PATH = "{{ cookiecutter.fact_graph_path }}"
+FORMATIVE_PATH = "{{ cookiecutter.formative_path }}"
+TAXPERT_PATH = "{{ cookiecutter.taxpert_path }}"
 INCLUDE_ALL_SCREENS = "{{ cookiecutter.include_all_screens }}" == "yes"
 INCLUDE_SCENARIO_MODE = "{{ cookiecutter.include_scenario_mode }}" == "yes"
 INCLUDE_TAXPERT_WORKSPACE = "{{ cookiecutter.include_taxpert_workspace }}" == "yes"
 INCLUDE_FACT_EXPLORER = "{{ cookiecutter.include_fact_explorer }}" == "yes"
 INCLUDE_DOCKER = "{{ cookiecutter.include_docker }}" == "yes"
+
+# `cookiecutter formative-template` writes into `<invocation cwd>/<repo_name>` by default, so typing
+# that from *inside* formative-template/ itself — a natural habit, "cd into the tool, then run it" —
+# nests the new app inside the template instead of beside it. Cookiecutter creates the project
+# directory before any hook runs, so there is no earlier point to intercept this; catch it here and
+# move the app up one level instead.
+#
+# The check is deliberately narrower than "the parent is named formative-template": the parent must
+# itself BE a cookiecutter template (a cookiecutter.json next to a hooks/ directory), so an explicit
+# `--output-dir` pointed somewhere else on purpose — even a directory that happens to share the name
+# — is left alone.
+if (ROOT.parent / "cookiecutter.json").is_file() and (ROOT.parent / "hooks").is_dir():
+    CORRECTED = ROOT.parent.parent / REPO_NAME
+    if CORRECTED.exists():
+        sys.exit(
+            f"error: generated {REPO_NAME} inside the template by mistake, and can't move it to "
+            f"{CORRECTED} to fix that — something is already there. Remove it, or re-run with a "
+            "different repo_name."
+        )
+    shutil.move(str(ROOT), str(CORRECTED))
+    os.chdir(CORRECTED)
+    ROOT = CORRECTED
+    print(f"note: moved {REPO_NAME} out of the template, to {ROOT}", file=sys.stderr)
 
 RESOURCES = ROOT / "src" / "main" / "resources" / APP_ID
 
@@ -164,12 +191,14 @@ if not INCLUDE_TAXPERT_WORKSPACE:
         # There is no root package.json left to install.
         ("\tnpm install\n", ""),
         (
-            "\t@# This app depends on three checkouts that sit beside it — fact-graph and formative through\n"
-            "\t@# the local Ivy cache, taxpert through a file: npm dependency. Nothing is published to a\n"
-            "\t@# remote yet, so a fresh clone has to build them once before it can build itself.\n",
-            "\t@# This app depends on two checkouts that sit beside it — fact-graph and formative, both\n"
-            "\t@# through the local Ivy cache. Nothing is published to a remote yet, so a fresh clone has\n"
-            "\t@# to build them once before it can build itself.\n",
+            "\t@# fact-graph and formative are resolved through the local Ivy cache, taxpert through a file:\n"
+            "\t@# npm dependency. None of the three is published to a remote yet, and none is guaranteed to\n"
+            "\t@# sit beside this repo (see fact_graph_path / formative_path / taxpert_path in\n"
+            "\t@# cookiecutter.json) — a fresh clone has to build them once before it can build itself.\n",
+            "\t@# fact-graph and formative are resolved through the local Ivy cache. Neither is published to a\n"
+            "\t@# remote yet, and neither is guaranteed to sit beside this repo (see fact_graph_path /\n"
+            "\t@# formative_path in cookiecutter.json) — a fresh clone has to build them once before it can\n"
+            "\t@# build itself.\n",
         ),
     )
     # The workspace's own stylesheets, and the one app-side stylesheet that only the workspace can
@@ -192,6 +221,12 @@ if not INCLUDE_TAXPERT_WORKSPACE:
         # block in the compose file precisely so it can be lifted out with its comment; a mount of a
         # sibling that is not there fails the whole `docker compose up`, so this is not optional.
         drop_blocks("docker-compose.override.yml", "vendor/taxpert")
+        # The `taxpert:` entry under each service's `additional_contexts:` — a build context pointed
+        # at a library this app no longer depends on would fail `docker compose build` outright.
+        drop_lines("docker-compose.yml", "taxpert:")
+        drop_lines("docker-compose.override.yml", "taxpert:")
+        # The matching line in the Dockerfile header's `docker build` example.
+        drop_lines("Dockerfile", "--build-context taxpert=")
     replace_in(
         ".github/workflows/ci.yml",
         (
@@ -317,17 +352,34 @@ if INCLUDE_ALL_SCREENS and not INCLUDE_TAXPERT_WORKSPACE:
   so on this app the page arrives with only the theme's styling. styles/all-screens.css says so too.
 """
 
+# The library paths, as answered — not assumed to be siblings. Printed back so a non-default
+# answer (a path elsewhere on disk, or a monorepo layout like this one) is visible immediately
+# rather than discovered the first time `make bootstrap` fails to find one.
+LIB_PATHS = [("fact-graph", FACT_GRAPH_PATH), ("formative", FORMATIVE_PATH)]
+if INCLUDE_TAXPERT_WORKSPACE:
+    LIB_PATHS.append(("taxpert", TAXPERT_PATH))
+libs_summary = ", ".join(f"{name} at {path}" for name, path in LIB_PATHS)
+
 print(
     """
   {name} is ready in ./{repo}
 
-  It expects three sibling checkouts — fact-graph, formative and taxpert — so put it beside them
-  and run:
+  It depends on {libs}, resolved from this app's own directory. Those paths came from this app's
+  cookiecutter answers (fact_graph_path / formative_path{taxpert_var} in cookiecutter.json) rather
+  than an assumption that the libraries sit beside it — if one of them moves, the Makefile{docker_var}
+  is where to update the path.
 
       cd {repo}
       make bootstrap        # publish the libraries, vendor their assets
       make dev              # http://localhost:{port}/app/{segment}/
 {next_steps}""".format(
-        name=PROJECT_NAME, repo=REPO_NAME, port=DEV_PORT, segment=URL_SEGMENT, next_steps=NEXT_STEPS
+        name=PROJECT_NAME,
+        repo=REPO_NAME,
+        libs=libs_summary,
+        taxpert_var=" / taxpert_path" if INCLUDE_TAXPERT_WORKSPACE else "",
+        docker_var=" (and docker-compose.yml, if you use it)" if INCLUDE_DOCKER else "",
+        port=DEV_PORT,
+        segment=URL_SEGMENT,
+        next_steps=NEXT_STEPS,
     )
 )

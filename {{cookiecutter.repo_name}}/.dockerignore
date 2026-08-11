@@ -1,5 +1,7 @@
-# The build context is the directory *above* this app, because the image also builds the sibling
-# libraries it depends on. Keep the heavy, regenerable trees out of it.
+# The build context is this app's own directory. fact-graph, formative and taxpert arrive as
+# separate named build contexts (see Dockerfile / docker-compose.yml's `additional_contexts`)
+# rather than subdirectories of this one, so this only needs to keep this app's own heavy,
+# regenerable trees out of the context.
 **/node_modules
 **/target
 **/out

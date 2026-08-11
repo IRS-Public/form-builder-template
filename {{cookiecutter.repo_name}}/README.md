@@ -10,13 +10,19 @@ Serves from `/app/{{ cookiecutter.url_segment }}`.
 
 | | Where | What it gives you |
 |---|---|---|
-| `gov.irs::factgraph` | `../fact-graph` | the evaluation engine, on the JVM and in the browser |
-| `gov.irs::formative` | `../formative` | Flow XML + a Fact Dictionary → a static site: parser, generators, Thymeleaf engine, node templates, chrome locales |
-| `taxpert` | `../taxpert` | the workspace laid over the running app — global nav, audit panel, Inspect / Outcome tracker / Watchlist — plus the browser flow runtime and the theme |
+| `gov.irs::factgraph` | `{{ cookiecutter.fact_graph_path }}` | the evaluation engine, on the JVM and in the browser |
+| `gov.irs::formative` | `{{ cookiecutter.formative_path }}` | Flow XML + a Fact Dictionary → a static site: parser, generators, Thymeleaf engine, node templates, chrome locales |
+| `taxpert` | `{{ cookiecutter.taxpert_path }}` | the workspace laid over the running app — global nav, audit panel, Inspect / Outcome tracker / Watchlist — plus the browser flow runtime and the theme |
 
-None of the three is published to a remote yet, so **this app expects all three checked out beside
-it**. `make bootstrap` builds and vendors them; the same contract is spelled out in
+None of the three is published to a remote yet, so **this app expects all three at the paths
+above** — not necessarily beside it. Those are the answers this app was generated with
+(`fact_graph_path` / `formative_path` / `taxpert_path` in `cookiecutter.json`); if a library moves,
+update the path everywhere it is used: `Makefile`, `package.json`, `docker-compose.yml` /
+`docker-compose.override.yml`, and `.github/workflows/ci.yml`'s checkout `path:`s. `make bootstrap`
+builds and vendors the libraries from wherever they are; the same contract is spelled out in
 `.github/workflows/ci.yml`.
+
+The default layout — and the one CI assumes — is three sibling checkouts:
 
 ```
 parent/
@@ -91,5 +97,6 @@ library:
 - **`inputTypes`** — a new input, or a replacement for a built-in. Registering an existing name
   replaces it rather than adding a second one.
 
-If you find yourself wanting to change something inside `../formative` or `../taxpert`, that is
-worth doing — but do it there, and run both of the other apps' `make ci` afterwards.
+If you find yourself wanting to change something inside `{{ cookiecutter.formative_path }}` or
+`{{ cookiecutter.taxpert_path }}`, that is worth doing — but do it there, and run both of the other
+apps' `make ci` afterwards.
