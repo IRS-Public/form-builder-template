@@ -26,11 +26,6 @@ all-screens:
 # built into an --auditMode site — but it is still per-locale, because a translator working in
 # Spanish should be able to read the tool they are working in.
 workspace:
-  nav:
-    experience-explorer: Experience Explorer
-    product-experience: Product Experience
-    browse-all: Browse All Screens
-    path-mode: Path Mode
   tools:
     inspect: Inspect
     inspect-description: Inspect facts, flows and text.

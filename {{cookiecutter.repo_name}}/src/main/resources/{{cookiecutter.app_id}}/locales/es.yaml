@@ -16,11 +16,6 @@ all-screens:
     other: Otros
 
 workspace:
-  nav:
-    experience-explorer: Explorador de experiencias
-    product-experience: Experiencia del producto
-    browse-all: Ver todas las pantallas
-    path-mode: Modo de recorrido
   tools:
     inspect: Inspeccionar
     inspect-description: Inspeccione hechos, flujos y texto.

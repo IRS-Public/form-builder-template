@@ -8,9 +8,10 @@
       workspace. The scaffold ships an empty default of this file; this one wins because app
       templates resolve ahead of the library's.
 
-      WHY A THYMELEAF FRAGMENT AND NOT A .js FILE. Everything here that a person reads — the nav
-      labels, the outcome headings, the words an outcome is spoken in — is a Thymeleaf message
-      expression, resolved per locale at build time. website-static/js is served as static assets
+      WHY A THYMELEAF FRAGMENT AND NOT A .js FILE. Everything here that a person reads and that
+      belongs to the *product* — the outcome headings, the words an outcome is spoken in — is a
+      Thymeleaf message expression, resolved per locale at build time. (The nav labels are the
+      exception, and say why at `nav:` below.) website-static/js is served as static assets
       and never passes through Thymeleaf, so a label written there would be English in the Spanish
       build. Behaviour that cannot be a translated literal — the fact-graph port and the fact paths
       themselves — lives in website-static/js/taxpert/{{ cookiecutter.app_id }}-graph.js and is imported below.
@@ -54,15 +55,24 @@
             // toolsByDestination names below; `href` is a real link, so the menu navigates with no
             // JavaScript at all. Add a destination only when the page behind it exists — a menu
             // that offers a 404 is worse than a short menu.
+            //
+            // These labels are English literals, not #{workspace.nav.*} message expressions, and
+            // that is the one deliberate exception to this file's "everything a person reads is a
+            // message expression" rule. The language switcher is the *product's* control: picking a
+            // language asks for the questionnaire in it. Translating the workspace around it put two
+            // names on one destination in a single view — the sub-nav under the bar is taxpert's own
+            // markup and reads "Product Experience" in every locale, while the menu item pointing at
+            // it read the translated one. The workspace is one surface in one language; the product
+            // underneath it is the thing that translates. `apps.items` below follows the same rule.
             nav: {
                 menu: [
                     {
                         id: 'experience-explorer',
-                        label: [[#{workspace.nav.experience-explorer}]],
+                        label: 'Experience Explorer',
                         children: [
-                            { id: 'product-experience', label: [[#{workspace.nav.product-experience}]], href: /*[[|${basePath}/|]]*/ '' },
-                            { id: 'browse-all', label: [[#{workspace.nav.browse-all}]], href: /*[[|${basePath}/all-screens/|]]*/ '' },
-                            { id: 'path-mode', label: [[#{workspace.nav.path-mode}]], href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
+                            { id: 'product-experience', label: 'Product Experience', href: /*[[|${basePath}/|]]*/ '' },
+                            { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
+                            { id: 'path-mode', label: 'Path Mode', href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
                         ],
                     },
                 ],
@@ -99,9 +109,9 @@
                         id: '{{ cookiecutter.app_id }}',
                         label: [[#{layout.title}]],
                         destinations: [
-                            { id: 'product-experience', label: [[#{workspace.nav.product-experience}]], href: /*[[|${basePath}/|]]*/ '' },
-                            { id: 'browse-all', label: [[#{workspace.nav.browse-all}]], href: /*[[|${basePath}/all-screens/|]]*/ '' },
-                            { id: 'path-mode', label: [[#{workspace.nav.path-mode}]], href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
+                            { id: 'product-experience', label: 'Product Experience', href: /*[[|${basePath}/|]]*/ '' },
+                            { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
+                            { id: 'path-mode', label: 'Path Mode', href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
                         ],
                     },
                 ],
