@@ -1,7 +1,7 @@
-# formative-template
+# form-builder-template
 
-A [cookiecutter](https://cookiecutter.readthedocs.io/) that generates a new **Formative app**: a
-multi-language static questionnaire built on [`gov.irs::formative`](../formative), the Scala library
+A [cookiecutter](https://cookiecutter.readthedocs.io/) that generates a new **Form Builder app**: a
+multi-language static questionnaire built on [`gov.irs::form-builder`](../form-builder), the Scala library
 that turns Flow XML plus a Fact Dictionary into a site.
 
 What it emits is deliberately thin. The parser, the generators, the Thymeleaf engine, the node
@@ -18,7 +18,7 @@ instead: a custom node type, a custom input type, an overridden template, an ove
 
 ```bash
 pipx install cookiecutter        # or: pip install cookiecutter
-cookiecutter formative-template
+cookiecutter form-builder-template
 ```
 
 Answer the prompts, then:
@@ -29,8 +29,8 @@ make bootstrap    # publish the sibling libraries, install npm deps, vendor thei
 make dev          # http://localhost:3010/app/my-tax-tool/
 ```
 
-The generated app lands beside `formative-template/`, in a directory named by your `repo_name`
-answer, whichever directory you ran `cookiecutter` from. Running it from inside `formative-template/`
+The generated app lands beside `form-builder-template/`, in a directory named by your `repo_name`
+answer, whichever directory you ran `cookiecutter` from. Running it from inside `form-builder-template/`
 itself would nest the new app inside the template, since cookiecutter's default output directory is
 `.`. The post-gen hook detects that one case and moves the app up a level. An explicit `--output-dir`
 is left alone.
@@ -40,14 +40,14 @@ branch with everything staged and nothing committed.
 
 ## What the generated app needs beside it
 
-`gov.irs::factgraph`, `gov.irs::formative` and `taxpert` are not published to a remote yet, so the
+`gov.irs::factgraph`, `gov.irs::form-builder` and `taxpert` are not published to a remote yet, so the
 generated app resolves each from a path you answer for. Each defaults to the sibling form, and each
 can be any relative or absolute path, independently of the others.
 
 ```
 parent/
 ├── fact-graph/
-├── formative/
+├── form-builder/
 ├── taxpert/            only with include_taxpert_workspace=yes
 └── my-tax-tool/        generated, with the three defaults above
 ```
@@ -70,10 +70,10 @@ the sibling layout you have to keep those in step by hand.
 | `brand` | = `project_name` | Shown in the dev server banner and used in page titles. |
 | `storage_prefix` | = `app_id` | Namespaces every browser storage key the site writes. |
 | `dev_port` | `3010` | The dev server port, and `PORT` in the Makefile. |
-| `formative_version` | `0.1.0-SNAPSHOT` | The `gov.irs::formative` version in `build.sbt`. |
+| `form_builder_version` | `0.1.0-SNAPSHOT` | The `gov.irs::form-builder` version in `build.sbt`. |
 | `factgraph_version` | `3.1.0-SNAPSHOT` | Used to name the vendored Scala.js bundle, `factgraph-3.1.0.js`. |
 | `fact_graph_path` | `../fact-graph` | Where that library lives, resolved from the generated app's own directory. |
-| `formative_path` | `../formative` | Same. |
+| `form_builder_path` | `../form-builder` | Same. |
 | `taxpert_path` | `../taxpert` | Same. Unused when the workspace is left out. |
 | `include_all_screens` | `yes` | The Browse All page that lists every screen at once. |
 | `include_scenario_mode` | `yes` | Saved fact graphs under `scenarios/`, loadable from the Scenario modal. |
@@ -102,17 +102,17 @@ readable as the files they will become.
 | `include_scenario_mode` | The `--scenarioMode` flag from every `sbt run` line, and the `scenarios/` directory. |
 | `include_all_screens` | The `--allScreens` flag, the `browse-all` and `path-mode` entries from the workspace config fragment, and the page's own `all-screens-bootstrap.js` and `all-screens.css`. |
 | `include_taxpert_workspace` | The `--auditMode` flag, the root `package.json` (whose only content is the `taxpert` dependency), the `copy-shared-ui` and `check-shared-ui` make targets, the workspace stylesheet imports in `main.css`, the four mount fragments, `taxpert.config.json`, the `website-static/js/taxpert/` registration, the Docker and CI references to the package, and the matching `.gitignore` entries. |
-| `include_fact_explorer` | The `--formativeGraph` flag, `fact-explorer.app.json`, and the `make fact-explorer` target. |
+| `include_fact_explorer` | The `--formBuilderGraph` flag, `fact-explorer.app.json`, and the `make fact-explorer` target. |
 | `include_docker` | `Dockerfile`, `nginx.conf`, `.dockerignore`, both compose files, and the `up` / `down` / `logs` / `ps` / `rebuild` targets. |
 
 A `no` to `include_taxpert_workspace` drops the `taxpert` dependency itself, along with the surfaces
 it draws. The generated app has no root `package.json`, no `node_modules` to install there, and no
 reference to the package anywhere. The theme and the flow runtime are unaffected, because both ship
-inside the `gov.irs::formative` jar and are extracted into `resources/vendor/formative/` on every
+inside the `gov.irs::form-builder` jar and are extracted into `resources/vendor/form-builder/` on every
 build.
 
 `include_fact_explorer` and `include_taxpert_workspace` are independent. Fact Explorer reads the
-Formative Graph, the fact dictionary and the engine bundle, all of which are the scaffold's, so
+Form Builder Graph, the fact dictionary and the engine bundle, all of which are the scaffold's, so
 `fact-explorer=yes` with `workspace=no` is a supported combination.
 
 One combination has a visible consequence, and the hook prints a note about it: with
@@ -155,15 +155,15 @@ When you start on your own product, replace the domain content and keep these sh
 ## Layout
 
 ```
-formative-template/
+form-builder-template/
 ├── cookiecutter.json                 the questions and the derived keys
 ├── hooks/post_gen_project.py         prune unselected features, chmod scripts, git init
 └── {{cookiecutter.repo_name}}/       the app itself, rendered as Jinja
-    ├── build.sbt                     one dependency: gov.irs::formative
+    ├── build.sbt                     one dependency: gov.irs::form-builder
     ├── Makefile                      dev, site, test, ci, the copy-* mirrors, docker
     ├── README.md                     the generated app's own README
     ├── CLAUDE.md
-    ├── src/main/scala/…/Main.scala    the FormativeApp
+    ├── src/main/scala/…/Main.scala    the FormBuilderApp
     ├── src/main/resources/{app_id}/  flow, facts, locales, templates, website-static
     └── src/test/scala/…/             FlowSpec and EligibilitySpec
 ```

@@ -1,13 +1,13 @@
 /* U.S. Web Design System (vendored from npm by `make copy-uswds`) */
 @import "../vendor/uswds-3.13.0/styles/uswds.min.css";
 
-/* The Formative theme: design tokens, page layout, and the styling for every element the scaffold
+/* The Form Builder theme: design tokens, page layout, and the styling for every element the scaffold
    generates. Anything this app genuinely styles differently goes *below* this import and wins by
    ordinary cascade order — do not fork a theme file to change one value.
 
    The scaffold extracts this out of its own jar when it generates the site, so unlike the imports
    around it there is no `make` target to keep it in sync. */
-@import "../vendor/formative/theme/styles/theme.css";
+@import "../vendor/form-builder/theme/styles/theme.css";
 
 /* Shared UI components (vendored from taxpert) */
 @import "../vendor/taxpert/global-nav/styles/global-nav.css";

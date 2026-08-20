@@ -1,9 +1,9 @@
 package {{ cookiecutter.scala_package }}
 
-import gov.irs.formative.{ Formative, FormativeApp }
+import gov.irs.formbuilder.{ FormBuilder, FormBuilderApp }
 import scala.collection.immutable.ListMap
 
-/** {{ cookiecutter.project_name }}, expressed as configuration over `gov.irs::formative`.
+/** {{ cookiecutter.project_name }}, expressed as configuration over `gov.irs::form-builder`.
   *
   * This is the whole Scala surface of the application. The flow parser, the generators, the Thymeleaf engine, the node
   * templates, the chrome locales and Author Mode all belong to the scaffold; what lives in this repository is the
@@ -13,7 +13,7 @@ import scala.collection.immutable.ListMap
   * `appId`, the URL segment and the sbt project name are deliberately independent, even though the template set all
   * three from one answer. Changing one later does not force the others.
   */
-val app: FormativeApp = FormativeApp(
+val app: FormBuilderApp = FormBuilderApp(
   appId = "{{ cookiecutter.app_id }}",
   basePath = "/app/{{ cookiecutter.url_segment }}",
   outSubdir = "app/{{ cookiecutter.url_segment }}",
@@ -25,7 +25,7 @@ val app: FormativeApp = FormativeApp(
   ),
   defaultPort = {{ cookiecutter.dev_port }},
   brand = "{{ cookiecutter.brand }}",
-  // Namespaces every browser storage key this site writes, so this app and any other Formative app
+  // Namespaces every browser storage key this site writes, so this app and any other Form Builder app
   // served from the same origin do not rehydrate each other's fact graph out of one sessionStorage.
   // The scaffold renders it into every page's <head>, whether or not the workspace is built in.
   storagePrefix = Some("{{ cookiecutter.storage_prefix }}"),
@@ -40,4 +40,4 @@ val app: FormativeApp = FormativeApp(
   // of each.
 )
 
-@main def main(args: String*): Unit = Formative.run(app, args)
+@main def main(args: String*): Unit = FormBuilder.run(app, args)

@@ -2,10 +2,10 @@
  *
  * This file is imported after the theme, so an ordinary declaration here beats the theme's without
  * `!important` and without a layer. Override a design token rather than a rule where you can — the
- * theme is built on the variables in `vendor/formative/theme/styles/variables.css`, so redefining
+ * theme is built on the variables in `vendor/form-builder/theme/styles/variables.css`, so redefining
  * one on `:root` re-tints everything that uses it at once.
  *
- * Do not fork a file out of the vendored theme to change a value in it. `vendor/formative/` is
+ * Do not fork a file out of the vendored theme to change a value in it. `vendor/form-builder/` is
  * extracted from the scaffold's jar on every build, so an edit there is silently overwritten.
  */
 

@@ -48,7 +48,7 @@
   },
 
   "$comment_customFlowTags": [
-    "Mirror FormativeApp.nodeTypes here. A flow tag the scaffold has never heard of reaches the graph",
+    "Mirror FormBuilderApp.nodeTypes here. A flow tag the scaffold has never heard of reaches the graph",
     "as a real node only if it is declared — undeclared tags are rejected, which is what makes a typo",
     "findable rather than silently invisible."
   ],

@@ -1,7 +1,7 @@
 # This application's own strings.
 #
 # The chrome the scaffold's templates need — components.*, errors.*, buttons.*, step-indicator.*,
-# layout.banner.*, layout.identifier.* — ships with gov.irs::formative. Lookup is app first, then
+# layout.banner.*, layout.identifier.* — ships with gov.irs::form-builder. Lookup is app first, then
 # the library, then the generated flow locale, so declaring a key here overrides the library's
 # without copying the rest of it.
 #

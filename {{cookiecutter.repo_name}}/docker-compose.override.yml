@@ -35,7 +35,7 @@ services:
       target: build
       additional_contexts:
         fact_graph: {{ cookiecutter.fact_graph_path }}
-        formative: {{ cookiecutter.formative_path }}
+        form-builder: {{ cookiecutter.form_builder_path }}
         taxpert: {{ cookiecutter.taxpert_path }}
     working_dir: /build/{{ cookiecutter.repo_name }}
     environment:
@@ -57,7 +57,7 @@ services:
 
     restart: unless-stopped
 
-  # fact-graph and formative are NOT live-mounted: sbt resolves them out of /root/.ivy2, which the
+  # fact-graph and form-builder are NOT live-mounted: sbt resolves them out of /root/.ivy2, which the
   # image's publishLocal stage (see additional_contexts above) baked in during the build. Editing
   # either one still needs `docker compose build`.
 

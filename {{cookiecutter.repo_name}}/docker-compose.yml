@@ -5,9 +5,9 @@
 #
 # Open: http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecutter.url_segment }}/
 #
-# fact-graph, formative and taxpert are not guaranteed to sit beside this repo, so each is its own
+# fact-graph, form-builder and taxpert are not guaranteed to sit beside this repo, so each is its own
 # named build context (`additional_contexts` below) instead of a subdirectory of a shared parent.
-# The paths are exactly what this app was generated with (fact_graph_path / formative_path /
+# The paths are exactly what this app was generated with (fact_graph_path / form_builder_path /
 # taxpert_path in cookiecutter.json) — edit them here too if a sibling library moves.
 #
 # There is no server at runtime. The generated site is fully static, so this service is nginx over
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
       additional_contexts:
         fact_graph: {{ cookiecutter.fact_graph_path }}
-        formative: {{ cookiecutter.formative_path }}
+        form-builder: {{ cookiecutter.form_builder_path }}
         taxpert: {{ cookiecutter.taxpert_path }}
     ports:
       - "{{ cookiecutter.dev_port }}:80"

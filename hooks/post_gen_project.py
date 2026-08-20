@@ -23,7 +23,7 @@ APP_ID = "{{ cookiecutter.app_id }}"
 URL_SEGMENT = "{{ cookiecutter.url_segment }}"
 DEV_PORT = "{{ cookiecutter.dev_port }}"
 FACT_GRAPH_PATH = "{{ cookiecutter.fact_graph_path }}"
-FORMATIVE_PATH = "{{ cookiecutter.formative_path }}"
+FORM_BUILDER_PATH = "{{ cookiecutter.form_builder_path }}"
 TAXPERT_PATH = "{{ cookiecutter.taxpert_path }}"
 INCLUDE_ALL_SCREENS = "{{ cookiecutter.include_all_screens }}" == "yes"
 INCLUDE_SCENARIO_MODE = "{{ cookiecutter.include_scenario_mode }}" == "yes"
@@ -31,13 +31,13 @@ INCLUDE_TAXPERT_WORKSPACE = "{{ cookiecutter.include_taxpert_workspace }}" == "y
 INCLUDE_FACT_EXPLORER = "{{ cookiecutter.include_fact_explorer }}" == "yes"
 INCLUDE_DOCKER = "{{ cookiecutter.include_docker }}" == "yes"
 
-# `cookiecutter formative-template` writes into `<invocation cwd>/<repo_name>` by default, so typing
-# that from *inside* formative-template/ itself — a natural habit, "cd into the tool, then run it" —
+# `cookiecutter form-builder-template` writes into `<invocation cwd>/<repo_name>` by default, so typing
+# that from *inside* form-builder-template/ itself — a natural habit, "cd into the tool, then run it" —
 # nests the new app inside the template instead of beside it. Cookiecutter creates the project
 # directory before any hook runs, so there is no earlier point to intercept this; catch it here and
 # move the app up one level instead.
 #
-# The check is deliberately narrower than "the parent is named formative-template": the parent must
+# The check is deliberately narrower than "the parent is named form-builder-template": the parent must
 # itself BE a cookiecutter template (a cookiecutter.json next to a hooks/ directory), so an explicit
 # `--output-dir` pointed somewhere else on purpose — even a directory that happens to share the name
 # — is left alone.
@@ -151,7 +151,7 @@ if not INCLUDE_TAXPERT_WORKSPACE:
     # That is newly true. taxpert used to carry the theme and the flow runtime as well as the
     # workspace, so every app needed the package whatever it answered here, and this block could only
     # strip --auditMode and delete a few registration files. Both of those now ship inside the
-    # `gov.irs::formative` jar and are extracted by the generator (see FormativeAssets.scala), so what
+    # `gov.irs::form-builder` jar and are extracted by the generator (see FormBuilderAssets.scala), so what
     # is left in taxpert is exactly the optional part: the global nav, the audit panel, the tool dock.
     #
     # So this deletes the npm dependency, the two make targets that vendor and verify it, the
@@ -191,20 +191,20 @@ if not INCLUDE_TAXPERT_WORKSPACE:
         # There is no root package.json left to install.
         ("\tnpm install\n", ""),
         (
-            "\t@# fact-graph and formative are resolved through the local Ivy cache, taxpert through a file:\n"
+            "\t@# fact-graph and form-builder are resolved through the local Ivy cache, taxpert through a file:\n"
             "\t@# npm dependency. None of the three is published to a remote yet, and none is guaranteed to\n"
-            "\t@# sit beside this repo (see fact_graph_path / formative_path / taxpert_path in\n"
+            "\t@# sit beside this repo (see fact_graph_path / form_builder_path / taxpert_path in\n"
             "\t@# cookiecutter.json) — a fresh clone has to build them once before it can build itself.\n",
-            "\t@# fact-graph and formative are resolved through the local Ivy cache. Neither is published to a\n"
+            "\t@# fact-graph and form-builder are resolved through the local Ivy cache. Neither is published to a\n"
             "\t@# remote yet, and neither is guaranteed to sit beside this repo (see fact_graph_path /\n"
-            "\t@# formative_path in cookiecutter.json) — a fresh clone has to build them once before it can\n"
+            "\t@# form_builder_path in cookiecutter.json) — a fresh clone has to build them once before it can\n"
             "\t@# build itself.\n",
         ),
     )
     # The workspace's own stylesheets, and the one app-side stylesheet that only the workspace can
     # switch on: `.display-conditions` is a class taxpert's display-options.js adds to <body>, so
     # without taxpert every rule in display-conditions.css is unreachable. The theme import is
-    # formative's and stays.
+    # form-builder's and stays.
     drop_blocks(
         RESOURCES / "website-static" / "styles" / "main.css",
         "vendor/taxpert",
@@ -268,14 +268,14 @@ if not INCLUDE_TAXPERT_WORKSPACE:
     )
 
 if not INCLUDE_FACT_EXPLORER:
-    # Two files and nothing else, because Fact Explorer is a *reader*. It needs the Formative Graph
-    # the --formativeGraph flag emits, and a descriptor telling it where this app lives; it needs no
+    # Two files and nothing else, because Fact Explorer is a *reader*. It needs the Form Builder Graph
+    # the --formBuilderGraph flag emits, and a descriptor telling it where this app lives; it needs no
     # dependency, no asset and no markup here. So saying no removes exactly those two things.
     #
     # Note this is independent of the Taxpert workspace. Fact Explorer reads the graph, the fact
     # dictionary and the engine bundle — all of them the scaffold's, none of them the workspace's —
     # so fact-explorer=yes / workspace=no is a legitimate combination and is left working.
-    strip_flag("--formativeGraph")
+    strip_flag("--formBuilderGraph")
     drop("fact-explorer.app.json")
     drop_blocks("Makefile", "fact-explorer:")
 
@@ -312,12 +312,12 @@ NEXT_STEPS = (
     else """
   This app was generated without the Taxpert workspace (no --auditMode, no nav, no audit panel or
   tool dock), and so without any dependency on the taxpert package at all — there is no root
-  package.json, and nothing to check out beside this repo but fact-graph and formative. Answering the
+  package.json, and nothing to check out beside this repo but fact-graph and form-builder. Answering the
   two questions in the flow is what proves the flow and fact graph are wired; there is no Outcome
   tracker here to watch it settle.
 
-  The theme and the flow runtime are unaffected: both ship inside the formative jar and are extracted
-  into resources/vendor/formative/ on every build.
+  The theme and the flow runtime are unaffected: both ship inside the form-builder jar and are extracted
+  into resources/vendor/form-builder/ on every build.
 """
 )
 
@@ -355,7 +355,7 @@ if INCLUDE_ALL_SCREENS and not INCLUDE_TAXPERT_WORKSPACE:
 # The library paths, as answered — not assumed to be siblings. Printed back so a non-default
 # answer (a path elsewhere on disk, or a monorepo layout like this one) is visible immediately
 # rather than discovered the first time `make bootstrap` fails to find one.
-LIB_PATHS = [("fact-graph", FACT_GRAPH_PATH), ("formative", FORMATIVE_PATH)]
+LIB_PATHS = [("fact-graph", FACT_GRAPH_PATH), ("form-builder", FORM_BUILDER_PATH)]
 if INCLUDE_TAXPERT_WORKSPACE:
     LIB_PATHS.append(("taxpert", TAXPERT_PATH))
 libs_summary = ", ".join(f"{name} at {path}" for name, path in LIB_PATHS)
@@ -365,7 +365,7 @@ print(
   {name} is ready in ./{repo}
 
   It depends on {libs}, resolved from this app's own directory. Those paths came from this app's
-  cookiecutter answers (fact_graph_path / formative_path{taxpert_var} in cookiecutter.json) rather
+  cookiecutter answers (fact_graph_path / form_builder_path{taxpert_var} in cookiecutter.json) rather
   than an assumption that the libraries sit beside it — if one of them moves, the Makefile{docker_var}
   is where to update the path.
 

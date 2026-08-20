@@ -1,7 +1,7 @@
 # {{ cookiecutter.project_name }}
 
-A multi-language static questionnaire, built as a **Formative app**. Flow XML describes the
-questions, a fact dictionary describes the tax facts behind them, and `gov.irs::formative` turns the
+A multi-language static questionnaire, built as a **Form Builder app**. Flow XML describes the
+questions, a fact dictionary describes the tax facts behind them, and `gov.irs::form-builder` turns the
 two into a site: every page, in every language, as plain HTML under `./out`.
 
 What lives in this repository is the domain. The flow, the facts, the locales, the brand styling, and
@@ -14,7 +14,7 @@ Serves from `/app/{{ cookiecutter.url_segment }}`.
 | Library | Where | What it gives you |
 |---|---|---|
 | `gov.irs::factgraph` | `{{ cookiecutter.fact_graph_path }}` | The fact evaluation engine, as a JVM jar and a Scala.js browser bundle. |
-| `gov.irs::formative` | `{{ cookiecutter.formative_path }}` | The scaffold: flow parser, site generators, Thymeleaf engine, node templates, chrome locales, the theme and the browser flow runtime. |
+| `gov.irs::form-builder` | `{{ cookiecutter.form_builder_path }}` | The scaffold: flow parser, site generators, Thymeleaf engine, node templates, chrome locales, the theme and the browser flow runtime. |
 {%- if cookiecutter.include_taxpert_workspace == 'yes' %}
 | `taxpert` | `{{ cookiecutter.taxpert_path }}` | The workspace laid over the running app: global nav, audit panel, and the Inspect / Outcome tracker / Watchlist tool panels. Optional, and this app was generated with it. |
 {%- endif %}
@@ -30,7 +30,7 @@ The default layout, and the one CI assumes:
 ```
 parent/
 ├── fact-graph/
-├── formative/
+├── form-builder/
 {%- if cookiecutter.include_taxpert_workspace == 'yes' %}
 ├── taxpert/
 {%- endif %}
@@ -39,7 +39,7 @@ parent/
 {% if cookiecutter.include_taxpert_workspace != 'yes' %}
 This app was generated without the Taxpert workspace, so there is no nav, no audit panel and no tool
 dock, and no npm dependency on the `taxpert` package at all. The theme and the flow runtime are
-unaffected: both ship inside the `formative` jar and are extracted into `resources/vendor/formative/`
+unaffected: both ship inside the `form-builder` jar and are extracted into `resources/vendor/form-builder/`
 on every build.
 {% endif %}
 ## Requirements
@@ -70,7 +70,7 @@ serves it, and leaves an `sbt ~run` watcher regenerating on every edit. Same URL
 | `make ci` | Build, then every validator in turn. |
 | `make diff-out` | Build `main` in a throwaway worktree and diff the two `out/` trees. Use it for any change meant to be output-neutral. |
 {%- if cookiecutter.include_fact_explorer == 'yes' %}
-| `make fact-explorer` | Build with `--formativeGraph` and print this app's Fact Explorer URL. |
+| `make fact-explorer` | Build with `--formBuilderGraph` and print this app's Fact Explorer URL. |
 {%- endif %}
 {%- if cookiecutter.include_docker == 'yes' %}
 | `make up` / `down` / `logs` / `ps` / `rebuild` | The Docker stack. `rebuild` is the escape hatch for a stale sibling library. |
@@ -80,7 +80,7 @@ serves it, and leaves an `sbt ~run` watcher regenerating on every edit. Same URL
 
 ```
 src/main/scala/{{ cookiecutter.__package_path }}/Main.scala
-    the FormativeApp value and one call to Formative.run. The whole Scala surface.
+    the FormBuilderApp value and one call to FormBuilder.run. The whole Scala surface.
 
 src/main/resources/{{ cookiecutter.app_id }}/
 ├── flow/           the questionnaire. index.xml names the modules, and each <page> is a directory
@@ -126,7 +126,7 @@ by hand loses the edit at the next build.
 
 ### Brand CSS
 
-`website-static/styles/main.css` imports USWDS, then the Formative theme, then this app's own
+`website-static/styles/main.css` imports USWDS, then the Form Builder theme, then this app's own
 `components/brand.css`. Put your overrides in `brand.css` or below the theme import, where they win by
 ordinary cascade order. Do not fork a theme file to change one value.
 
@@ -136,7 +136,7 @@ ordinary cascade order. Do not fork a theme file to change one value.
 2. **Never hand-edit anything under `website-static/vendor/`.** Every directory in there is a
    generated mirror with exactly one writer: `make copy-uswds` for USWDS, `make copy-fg` for the
    Scala.js fact graph,{% if cookiecutter.include_taxpert_workspace == 'yes' %} `make copy-shared-ui` for taxpert,{% endif %} and the scaffold itself for
-   `vendor/formative/`, which it extracts from its own jar as it generates the site.{% if cookiecutter.include_taxpert_workspace == 'yes' %}
+   `vendor/form-builder/`, which it extracts from its own jar as it generates the site.{% if cookiecutter.include_taxpert_workspace == 'yes' %}
    `make check-shared-ui` fails the build if the taxpert mirror drifts.{% endif %}
 3. **Override, do not fork.** Change a node template by dropping a same-named file into
    `templates/nodes/`, since app templates resolve ahead of the library's. Change a chrome string by
@@ -152,7 +152,7 @@ ordinary cascade order. Do not fork a theme file to change one value.
 
 ## Extending the scaffold
 
-Two seams, both registrations on the `FormativeApp` in `Main.scala` rather than edits to the library:
+Two seams, both registrations on the `FormBuilderApp` in `Main.scala` rather than edits to the library:
 
 - **`nodeTypes`** maps a flow element the scaffold has never heard of to a `FlowNodeParser`. Put the
   element's Thymeleaf template in `templates/nodes/`, and widen `flow/FlowConfig.rng` to allow it.
@@ -164,7 +164,7 @@ Two seams, both registrations on the `FormativeApp` in `Main.scala` rather than 
 | The change is about… | It belongs in |
 |---|---|
 | A question, a rule, a threshold, a word a taxpayer reads | this repo |
-| How any Flow XML becomes HTML: the parser, a generator, a node template, a chrome string, the theme, the flow runtime | `{{ cookiecutter.formative_path }}` |
+| How any Flow XML becomes HTML: the parser, a generator, a node template, a chrome string, the theme, the flow runtime | `{{ cookiecutter.form_builder_path }}` |
 {%- if cookiecutter.include_taxpert_workspace == 'yes' %}
 | The workspace: nav, audit panel, Inspect / Outcome tracker / Watchlist | `{{ cookiecutter.taxpert_path }}` |
 {%- endif %}

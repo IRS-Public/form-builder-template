@@ -1,4 +1,4 @@
-# The build context is this app's own directory. fact-graph, formative and taxpert arrive as
+# The build context is this app's own directory. fact-graph, form-builder and taxpert arrive as
 # separate named build contexts (see Dockerfile / docker-compose.yml's `additional_contexts`)
 # rather than subdirectories of this one, so this only needs to keep this app's own heavy,
 # regenerable trees out of the context.

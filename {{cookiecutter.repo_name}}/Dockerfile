@@ -2,19 +2,19 @@
 #
 # {{ cookiecutter.project_name }} — prod-like static image.
 #
-# The build context is this repository itself. fact-graph, formative and taxpert are not
+# The build context is this repository itself. fact-graph, form-builder and taxpert are not
 # guaranteed to sit beside it, so each is supplied as its own named build context instead of a
 # subdirectory of a shared parent — docker-compose.yml passes the paths this app was generated with
-# (fact_graph_path / formative_path / taxpert_path in cookiecutter.json) via `additional_contexts`.
+# (fact_graph_path / form_builder_path / taxpert_path in cookiecutter.json) via `additional_contexts`.
 # Building with plain `docker build` needs the same three paths spelled out by hand:
 #
 #   docker build \
 #     --build-context fact_graph={{ cookiecutter.fact_graph_path }} \
-#     --build-context formative={{ cookiecutter.formative_path }} \
+#     --build-context form-builder={{ cookiecutter.form_builder_path }} \
 #     --build-context taxpert={{ cookiecutter.taxpert_path }} \
 #     -t {{ cookiecutter.repo_name }} .
 #
-#   stage 1 (libs)    : sbt publishLocal in fact-graph and formative -> Ivy artifacts + main.mjs
+#   stage 1 (libs)    : sbt publishLocal in fact-graph and form-builder -> Ivy artifacts + main.mjs
 #   stage 2 (build)   : sbt run                                      -> static site in ./out
 #   stage 3 (runtime) : nginx serves ./out
 #
@@ -40,7 +40,7 @@ ENV PATH="/opt/sbt/bin:${PATH}"
 FROM sbt-base AS libs
 WORKDIR /build
 COPY --from=fact_graph . ./fact-graph/
-COPY --from=formative . ./formative/
+COPY --from=form-builder . ./form-builder/
 # The publishLocal output lands in /root/.ivy2/local — a real image layer, not a cache mount, so
 # stage 2 can copy it. The download caches are mounts because nothing later needs them.
 RUN --mount=type=cache,target=/root/.cache/coursier \
@@ -48,7 +48,7 @@ RUN --mount=type=cache,target=/root/.cache/coursier \
     cd fact-graph && sbt compile fastOptJS publishLocal
 RUN --mount=type=cache,target=/root/.cache/coursier \
     --mount=type=cache,target=/root/.sbt \
-    cd formative && sbt publishLocal
+    cd form-builder && sbt publishLocal
 
 # ---- stage 2: generate the static site --------------------------------------------
 FROM sbt-base AS build

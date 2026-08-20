@@ -1,6 +1,6 @@
 package {{ cookiecutter.scala_package }}
 
-import gov.irs.formative.Formative
+import gov.irs.formbuilder.FormBuilder
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
   */
 class FlowSpec extends AnyFlatSpec with Matchers {
 
-  private lazy val flow = Formative.parseFlow(app)
+  private lazy val flow = FormBuilder.parseFlow(app)
 
   "the flow" should "parse every module named in index.xml, with every fact path resolving" in {
     flow.pages should not be empty

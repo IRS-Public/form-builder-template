@@ -18,7 +18,7 @@ lazy val root = (project in file("."))
     // The scaffold: parser, generators, Thymeleaf engine, node templates, chrome locales.
     // Everything it is built on — thymeleaf, jsoup, circe, os-lib, scala-xml, factgraph — arrives
     // transitively, so this is the only line that ever needs to name a version.
-    libraryDependencies += "gov.irs" %% "formative" % "{{ cookiecutter.formative_version }}",
+    libraryDependencies += "gov.irs" %% "form-builder" % "{{ cookiecutter.form_builder_version }}",
 
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test,
     )

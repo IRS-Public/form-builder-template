@@ -3,7 +3,7 @@ package {{ cookiecutter.scala_package }}
 import gov.irs.factgraph.types.Dollar
 import gov.irs.factgraph.types.Enum as FgEnum
 import gov.irs.factgraph.Graph
-import gov.irs.formative.loadFactDictionary
+import gov.irs.formbuilder.loadFactDictionary
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

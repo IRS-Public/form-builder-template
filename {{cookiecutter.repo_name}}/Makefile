@@ -25,12 +25,12 @@ help: ## Print the help documentation
 
 .PHONY: bootstrap
 bootstrap: ## One-time setup: publish the sibling libraries and vendor their assets
-	@# fact-graph and formative are resolved through the local Ivy cache, taxpert through a file:
+	@# fact-graph and form-builder are resolved through the local Ivy cache, taxpert through a file:
 	@# npm dependency. None of the three is published to a remote yet, and none is guaranteed to
-	@# sit beside this repo (see fact_graph_path / formative_path / taxpert_path in
+	@# sit beside this repo (see fact_graph_path / form_builder_path / taxpert_path in
 	@# cookiecutter.json) — a fresh clone has to build them once before it can build itself.
 	$(MAKE) -C {{ cookiecutter.fact_graph_path }} publish
-	cd {{ cookiecutter.formative_path }} && sbt publishLocal
+	cd {{ cookiecutter.form_builder_path }} && sbt publishLocal
 	npm install
 	npm --prefix $(RESOURCES_DIR) install
 	$(MAKE) copy-fg copy-shared-ui copy-uswds
@@ -85,7 +85,7 @@ ps: ## Show service status
 
 .PHONY: rebuild
 rebuild: ## Tear down the stack, drop its volumes, and rebuild images from scratch, ignoring the layer cache
-	@# The escape hatch for a stale sibling library: formative and fact-graph are resolved from
+	@# The escape hatch for a stale sibling library: form-builder and fact-graph are resolved from
 	@# the image's own Ivy cache, not a bind mount, so editing either one needs a rebuild.
 	@# down -v first: app-out and sbt-cache persist across a plain `down`/`up`, so a stale sbt
 	@# cache or a half-regenerated out/ would otherwise survive a "from scratch" rebuild. Compose
@@ -133,7 +133,7 @@ copy-uswds: ## Regenerate the vendored USWDS mirror from node_modules
 	# committing 16MB of it means the version lives in package.json, where dependabot can see it.
 	#
 	# The distributed layout is remapped rather than copied verbatim: USWDS ships CSS under
-	# `dist/css/`, and every Formative page asks for `vendor/uswds-$(USWDS_VERSION)/styles/`.
+	# `dist/css/`, and every Form Builder page asks for `vendor/uswds-$(USWDS_VERSION)/styles/`.
 	@if [ ! -d $(USWDS_SRC) ]; then \
 		echo "==> $(USWDS_SRC) not found — run 'make ci-setup' (or 'make bootstrap') first"; exit 1; \
 	fi
@@ -231,12 +231,12 @@ diff-out: ## Diff this branch's generated site against `main`
 	./scripts/diff-out.sh
 
 .PHONY: fact-explorer
-fact-explorer: ## Build with the Formative Graph and print this app's Fact Explorer URL
+fact-explorer: ## Build with the Form Builder Graph and print this app's Fact Explorer URL
 	@# Deliberately not folded into `dev`. Fact Explorer prefers an app-served graph wherever it finds
 	@# one, and the Scala generator is still catching up with fact-explorer's own node generator, so
-	@# building with --formativeGraph by default would hand Fact Explorer the sparser of the two graphs.
+	@# building with --formBuilderGraph by default would hand Fact Explorer the sparser of the two graphs.
 	$(MAKE) copy-fg copy-shared-ui copy-uswds
-	sbt 'run --formativeGraph'
+	sbt 'run --formBuilderGraph'
 	@echo "==> regenerate Fact Explorer's registry, then open:"
 	@echo "    cd ../fact-explorer && npm run build-registry && npm run dev"
 	@echo "    http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}"
