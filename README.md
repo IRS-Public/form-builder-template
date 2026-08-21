@@ -1,7 +1,7 @@
 # form-builder-template
 
 A [cookiecutter](https://cookiecutter.readthedocs.io/) that generates a new **Form Builder app**: a
-multi-language static questionnaire built on [`gov.irs::form-builder`](../form-builder), the Scala library
+multi-language static questionnaire built on [`gov.irs::form-builder`](https://github.com/IRS-Public/form-builder), the Scala library
 that turns Flow XML plus a Fact Dictionary into a site.
 
 What it emits is deliberately thin. The parser, the generators, the Thymeleaf engine, the node
