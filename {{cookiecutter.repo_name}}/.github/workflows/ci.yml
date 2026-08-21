@@ -13,7 +13,7 @@ jobs:
         with:
           path: {{ cookiecutter.repo_name }}
 
-      # The libraries this app is built on are not published to a remote yet, so CI checks them out
+      # The libraries this app is built on are resolved from local checkouts, so CI checks them out
       # and publishes them locally — the same contract `make bootstrap` encodes for a developer.
       # Repoint these three at wherever they actually live, or delete them once the artifacts are
       # published somewhere CI can resolve. Their `path:` here and fact_graph_path / form_builder_path

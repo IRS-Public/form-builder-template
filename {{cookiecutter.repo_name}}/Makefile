@@ -26,8 +26,8 @@ help: ## Print the help documentation
 .PHONY: bootstrap
 bootstrap: ## One-time setup: publish the sibling libraries and vendor their assets
 	@# fact-graph and form-builder are resolved through the local Ivy cache, taxpert through a file:
-	@# npm dependency. None of the three is published to a remote yet, and none is guaranteed to
-	@# sit beside this repo (see fact_graph_path / form_builder_path / taxpert_path in
+	@# npm dependency. All three come from local checkouts rather than a remote, and none is
+	@# guaranteed to sit beside this repo (see fact_graph_path / form_builder_path / taxpert_path in
 	@# cookiecutter.json) — a fresh clone has to build them once before it can build itself.
 	$(MAKE) -C {{ cookiecutter.fact_graph_path }} publish
 	cd {{ cookiecutter.form_builder_path }} && sbt publishLocal
@@ -237,6 +237,7 @@ fact-explorer: ## Build with the Form Builder Graph and print this app's Fact Ex
 	@# building with --formBuilderGraph by default would hand Fact Explorer the sparser of the two graphs.
 	$(MAKE) copy-fg copy-shared-ui copy-uswds
 	sbt 'run --formBuilderGraph'
-	@echo "==> regenerate Fact Explorer's registry, then open:"
-	@echo "    cd ../fact-explorer && npm run build-registry && npm run dev"
+	@echo "==> put this repo in Fact Explorer's apps directory (taxpert/apps, or FORM_BUILDER_APPS_DIR),"
+	@echo "    regenerate its registry, then open:"
+	@echo "    cd /path/to/taxpert/packages/fact-explorer && npm run build-registry && npm run dev"
 	@echo "    http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}"

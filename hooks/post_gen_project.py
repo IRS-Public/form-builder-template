@@ -192,13 +192,13 @@ if not INCLUDE_TAXPERT_WORKSPACE:
         ("\tnpm install\n", ""),
         (
             "\t@# fact-graph and form-builder are resolved through the local Ivy cache, taxpert through a file:\n"
-            "\t@# npm dependency. None of the three is published to a remote yet, and none is guaranteed to\n"
-            "\t@# sit beside this repo (see fact_graph_path / form_builder_path / taxpert_path in\n"
+            "\t@# npm dependency. All three come from local checkouts rather than a remote, and none is\n"
+            "\t@# guaranteed to sit beside this repo (see fact_graph_path / form_builder_path / taxpert_path in\n"
             "\t@# cookiecutter.json) — a fresh clone has to build them once before it can build itself.\n",
-            "\t@# fact-graph and form-builder are resolved through the local Ivy cache. Neither is published to a\n"
-            "\t@# remote yet, and neither is guaranteed to sit beside this repo (see fact_graph_path /\n"
-            "\t@# form_builder_path in cookiecutter.json) — a fresh clone has to build them once before it can\n"
-            "\t@# build itself.\n",
+            "\t@# fact-graph and form-builder are resolved through the local Ivy cache. Both come from local\n"
+            "\t@# checkouts rather than a remote, and neither is guaranteed to sit beside this repo (see\n"
+            "\t@# fact_graph_path / form_builder_path in cookiecutter.json) — a fresh clone has to build them\n"
+            "\t@# once before it can build itself.\n",
         ),
     )
     # The workspace's own stylesheets, and the one app-side stylesheet that only the workspace can
@@ -338,11 +338,13 @@ if INCLUDE_FACT_EXPLORER:
     # for anyone generating outside the monorepo. The emitted fact-explorer.app.json is the
     # registration, and build-registry.mjs finds it — so all that is left to do here is say so.
     NEXT_STEPS += """
-  This app ships a fact-explorer.app.json, so Fact Explorer finds it automatically when the repo
-  sits beside it. To see the flow and fact dictionary as a graph:
+  This app ships a fact-explorer.app.json, so Fact Explorer finds it once the repo sits in the apps
+  directory it scans — taxpert/apps, or wherever FORM_BUILDER_APPS_DIR points. To see the flow and
+  fact dictionary as a graph:
 
       make fact-explorer
-      cd ../fact-explorer && npm run build-registry && npm run dev
+      ln -s "$PWD" /path/to/taxpert/apps/          # once
+      cd /path/to/taxpert/packages/fact-explorer && npm run build-registry && npm run dev
 """
 
 # One consequence worth saying out loud rather than leaving to be discovered in the browser.

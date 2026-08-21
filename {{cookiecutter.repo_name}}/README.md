@@ -19,9 +19,9 @@ Serves from `/app/{{ cookiecutter.url_segment }}`.
 | `taxpert` | `{{ cookiecutter.taxpert_path }}` | The workspace laid over the running app: global nav, audit panel, and the Inspect / Outcome tracker / Watchlist tool panels. Optional, and this app was generated with it. |
 {%- endif %}
 
-None of them is published to a remote yet, so this app expects each at the path above. Those are the
-answers it was generated with, resolved from this app's own directory rather than assumed to be
-siblings. If a library moves, update the path in the `Makefile`{% if cookiecutter.include_taxpert_workspace == 'yes' %}, `package.json`{% endif %}{% if cookiecutter.include_docker == 'yes' %},
+Each is resolved from a local checkout rather than a remote, so this app expects each at the path
+above. Those are the answers it was generated with, resolved from this app's own directory rather
+than assumed to be siblings. If a library moves, update the path in the `Makefile`{% if cookiecutter.include_taxpert_workspace == 'yes' %}, `package.json`{% endif %}{% if cookiecutter.include_docker == 'yes' %},
 `docker-compose.yml`, `docker-compose.override.yml`{% endif %} and the checkout `path:`s in
 `.github/workflows/ci.yml`.
 
@@ -33,6 +33,7 @@ parent/
 ├── form-builder/
 {%- if cookiecutter.include_taxpert_workspace == 'yes' %}
 ├── taxpert/
+│   └── packages/ui/    the workspace package this app depends on
 {%- endif %}
 └── {{ cookiecutter.repo_name }}/
 ```

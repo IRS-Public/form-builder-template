@@ -14,6 +14,23 @@ them, 23 of one app's 28 Scala files sharing a basename with the other's, and a 
 the generator would have made that fork number three. Everything genuinely per-app is a registration
 instead: a custom node type, a custom input type, an overridden template, an overridden locale key.
 
+
+### Contributing
+Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+
+This codebase is dedicated to the public domain under the [Creative Commons Zero v1.0 Universal](LICENSE.md) license (CC0 1.0).
+
+## Legal Disclaimer: Public Repository Access
+
+> This repository contains draft and under-development source code. It is made available to the public solely for transparency, collaboration, and research purposes.
+>
+> **No Endorsement or Warranty**
+>
+> IRS does not endorse, maintain, or guarantee the accuracy, completeness, or functionality of the code in this repository. The IRS assumes no responsibility or liability for any use of the code by external parties, including individuals, developers, or organizations. This includes—but is not limited to—any tax consequences, computation errors, data loss, or other outcomes resulting from the use or modification of this code.
+>
+> Use of the code in this repository is at your own risk. This repository is not intended for production use or public consumption as a finalized product.
+
+
 ## Use it
 
 ```bash
@@ -40,15 +57,18 @@ branch with everything staged and nothing committed.
 
 ## What the generated app needs beside it
 
-`gov.irs::factgraph`, `gov.irs::form-builder` and `taxpert` are not published to a remote yet, so the
-generated app resolves each from a path you answer for. Each defaults to the sibling form, and each
-can be any relative or absolute path, independently of the others.
+`gov.irs::factgraph`, `gov.irs::form-builder` and `taxpert` are resolved from local checkouts rather
+than a remote — the two Scala libraries through the local Ivy cache after `publishLocal`, the
+workspace through a `file:` npm dependency — so the generated app resolves each from a path you
+answer for. Each defaults to the sibling form, and each can be any relative or absolute path,
+independently of the others.
 
 ```
 parent/
 ├── fact-graph/
 ├── form-builder/
-├── taxpert/            only with include_taxpert_workspace=yes
+├── taxpert/
+│   └── packages/ui/    the workspace package — only with include_taxpert_workspace=yes
 └── my-tax-tool/        generated, with the three defaults above
 ```
 
@@ -74,7 +94,7 @@ the sibling layout you have to keep those in step by hand.
 | `factgraph_version` | `3.1.0-SNAPSHOT` | Used to name the vendored Scala.js bundle, `factgraph-3.1.0.js`. |
 | `fact_graph_path` | `../fact-graph` | Where that library lives, resolved from the generated app's own directory. |
 | `form_builder_path` | `../form-builder` | Same. |
-| `taxpert_path` | `../taxpert` | Same. Unused when the workspace is left out. |
+| `taxpert_path` | `../taxpert/packages/ui` | Same. The workspace package inside the taxpert repo, not the repo root. Unused when the workspace is left out. |
 | `include_all_screens` | `yes` | The Browse All page that lists every screen at once. |
 | `include_scenario_mode` | `yes` | Saved fact graphs under `scenarios/`, loadable from the Scenario modal. |
 | `include_taxpert_workspace` | `yes` | The global nav, audit panel and tool dock. |
@@ -123,13 +143,17 @@ theme's styling on it.
 ## Seeing the generated app in Fact Explorer
 
 With `include_fact_explorer=yes` the repo ships a `fact-explorer.app.json`, and that file **is** the
-registration. [Fact Explorer](../fact-explorer)'s `build-registry` script globs
-`../*/fact-explorer.app.json`, so putting the repo beside `fact-explorer/` is the whole of the wiring.
-There is no list to edit, and the hook writes nothing outside the repo it creates.
+registration. Fact Explorer lives in the [taxpert](https://github.com/IRS-Public/taxpert) repo at
+`packages/fact-explorer`; its `build-registry` script globs
+`<apps dir>/*/fact-explorer.app.json`, where the apps directory is `FORM_BUILDER_APPS_DIR` or
+`taxpert/apps` by default. Putting the repo there — a clone or a symlink — is the whole of the
+wiring. There is no list to edit, and the hook writes nothing outside the repo it creates.
 
 ```bash
 cd my-tax-tool && make fact-explorer
-cd ../fact-explorer && npm run build-registry && npm run dev
+ln -s "$PWD" /path/to/taxpert/apps/          # once
+cd /path/to/taxpert/packages/fact-explorer
+npm run build-registry && npm run dev
 # → http://localhost:5180/fact-explorer/my-tax-tool
 ```
 

@@ -11,7 +11,7 @@
   "factgraph_version": "3.1.0-SNAPSHOT",
   "fact_graph_path": "../fact-graph",
   "form_builder_path": "../form-builder",
-  "taxpert_path": "../taxpert",
+  "taxpert_path": "../taxpert/packages/ui",
   "include_all_screens": [
     "yes",
     "no"
