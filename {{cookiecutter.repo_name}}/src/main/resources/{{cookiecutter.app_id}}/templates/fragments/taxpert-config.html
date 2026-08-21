@@ -71,8 +71,8 @@
                         label: 'Experience Explorer',
                         children: [
                             { id: 'product-experience', label: 'Product Experience', href: /*[[|${basePath}/|]]*/ '' },
-                            { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
                             { id: 'path-mode', label: 'Path Mode', href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
+                            { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
                         ],
                     },
                 ],
@@ -83,7 +83,7 @@
                 // a reading of one Fact Graph, so all three do.
                 toolsByDestination: [
                     { id: 'scenario', label: 'Scenario', icon: 'tune', destinations: ['product-experience', 'path-mode'] },
-                    { id: 'display', label: 'Display', icon: 'visibility', destinations: ['product-experience', 'browse-all', 'path-mode'] },
+                    { id: 'display', label: 'Display', icon: 'visibility', destinations: ['product-experience', 'path-mode', 'browse-all'] },
                     { id: 'tools', label: 'Tools', icon: 'build', destinations: ['product-experience', 'path-mode'] },
                 ],
             },
@@ -110,8 +110,8 @@
                         label: [[#{layout.title}]],
                         destinations: [
                             { id: 'product-experience', label: 'Product Experience', href: /*[[|${basePath}/|]]*/ '' },
-                            { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
                             { id: 'path-mode', label: 'Path Mode', href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
+                            { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
                         ],
                     },
                 ],
