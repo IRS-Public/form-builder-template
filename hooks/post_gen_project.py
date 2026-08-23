@@ -236,6 +236,16 @@ if not INCLUDE_TAXPERT_WORKSPACE:
             "          path: taxpert\n",
             "",
         ),
+        # ...and the prose above it, which counts them. Left alone, the comment tells you to repoint
+        # "these three" at a list of two and names a taxpert_path this app no longer has.
+        (
+            "      # Repoint these three at wherever they actually live, or delete them once the artifacts are\n"
+            "      # published somewhere CI can resolve. Their `path:` here and fact_graph_path / form_builder_path\n"
+            "      # / taxpert_path in cookiecutter.json describe the same three checkouts from two different\n",
+            "      # Repoint these two at wherever they actually live, or delete them once the artifacts are\n"
+            "      # published somewhere CI can resolve. Their `path:` here and fact_graph_path /\n"
+            "      # form_builder_path in cookiecutter.json describe the same two checkouts from two different\n",
+        ),
     )
     if INCLUDE_ALL_SCREENS:
         # Browse All / Path Mode is one page owned in two places: the markup is the scaffold's, but

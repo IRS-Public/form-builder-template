@@ -50,9 +50,8 @@ JDK 21, sbt, Node 22, and `xmllint` for the XML validators (`libxml2-utils` on D
 `build.sbt` names one dependency, `gov.irs %% "form-builder"`, and declares no resolvers. Both that
 library and the `gov.irs::factgraph` it pulls in transitively are resolved from the local Ivy cache
 at `~/.ivy2/local`, so each has to be published there once from its checkout. `make bootstrap` does
-that for you. Note that `gov.irs::factgraph` is published to no remote repository, and
-`gov.irs::form-builder` is published to GitHub Packages, which requires a token even to read, so a
-local publish is the path of least resistance either way.
+that for you. Neither library is published to a remote artifact registry, so publishing locally
+from each checkout is the only route to them.
 
 ## Getting started
 

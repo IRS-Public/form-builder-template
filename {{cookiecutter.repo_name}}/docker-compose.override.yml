@@ -55,6 +55,22 @@ services:
       # until someone wonders why their edits do nothing.
       - {{ cookiecutter.taxpert_path }}/src:/build/{{ cookiecutter.repo_name }}/src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/taxpert:ro
 
+      # The engine bundle and the design system are built INSIDE the image, and must not be
+      # shadowed. The bind mount of this repo, above, replaces /build/{{ cookiecutter.repo_name }} wholesale with the
+      # host's copy — and both of these are gitignored, so on a fresh clone they are empty or
+      # absent. The generator would then copy nothing into out/, and the served site would come back
+      # with no fact-graph engine and no USWDS: a page that renders but cannot evaluate a fact.
+      #
+      # A named volume nested under a bind mount is seeded from the image on first creation, exactly
+      # as app-out is, so both arrive from the image and `make up` needs no host toolchain at all.
+      # That is the whole claim of this overlay, and without these two lines it is false.
+      #
+      # Neither is a live-edit mount, because neither has a source tree on the host to point at: the
+      # engine bundle is stage 1's fastOptJS output and the USWDS mirror is stage 2's
+      # `make copy-uswds`. Rebuild the image to pick up a change to either.
+      - vendor-fact-graph:/build/{{ cookiecutter.repo_name }}/src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/fact-graph
+      - vendor-uswds:/build/{{ cookiecutter.repo_name }}/src/main/resources/{{ cookiecutter.app_id }}/website-static/vendor/uswds-3.13.0
+
     restart: unless-stopped
 
   # fact-graph and form-builder are NOT live-mounted: sbt resolves them out of /root/.ivy2, which the
@@ -64,3 +80,5 @@ services:
 volumes:
   app-out:
   sbt-cache:
+  vendor-fact-graph:
+  vendor-uswds:

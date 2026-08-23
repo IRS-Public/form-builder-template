@@ -7,7 +7,7 @@
   "brand": "{{ cookiecutter.project_name }}",
   "storage_prefix": "{{ cookiecutter.app_id }}",
   "dev_port": "3010",
-  "form_builder_version": "0.1.0",
+  "form_builder_version": "0.1.0-SNAPSHOT",
   "factgraph_version": "3.1.0-SNAPSHOT",
   "fact_graph_path": "../fact-graph",
   "form_builder_path": "../form-builder",

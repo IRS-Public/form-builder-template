@@ -71,12 +71,11 @@ cd form-builder && sbt publishLocal
 `make bootstrap` in the generated app runs the equivalent of both, so in practice you clone the two
 repositories and then let the Makefile do it.
 
-Two things are worth knowing before you look for a shortcut. `gov.irs::factgraph` 3.1.0-SNAPSHOT is
-published to no remote repository at all, so a local publish is the only way to get it. And
-`gov.irs::form-builder` is published to GitHub Packages under the `gov.irs` group, which requires
-authentication even to read a public package. Consuming it that way means adding the GitHub Packages
-resolver and a personal access token with `read:packages` to the generated `build.sbt` yourself. The
-template does not set that up, and publishing locally needs no token.
+There is no shortcut to look for. Neither library is published to a remote artifact registry —
+not `gov.irs::factgraph` 3.1.0-SNAPSHOT, and not `gov.irs::form-builder` — so publishing locally
+from a checkout is the only way to get either one. That is also why the generated `build.sbt`
+carries no `resolvers +=` line and no credentials: there is no registry to point sbt at, and
+nothing to authenticate against.
 
 `fact-graph` also supplies the Scala.js browser bundle. `make copy-fg` looks for it at
 `<fact_graph_path>/js/target/scala-3.3.6/factgraph-fastopt/main.mjs`, which is what `sbt fastOptJS`
@@ -113,7 +112,7 @@ hook detects that one case and moves the app up a level. An explicit `--output-d
 | `brand` | same as `project_name` | Shown in the dev server banner and used in page titles. |
 | `storage_prefix` | same as `app_id` | Namespaces every browser storage key the site writes. |
 | `dev_port` | `3010` | The dev server port, the `PORT` variable in the Makefile, and the published Docker port. |
-| `form_builder_version` | `0.1.0` | The `gov.irs::form-builder` version in `build.sbt`. |
+| `form_builder_version` | `0.1.0-SNAPSHOT` | The `gov.irs::form-builder` version in `build.sbt`. |
 | `factgraph_version` | `3.1.0-SNAPSHOT` | Names the vendored Scala.js bundle. The `-SNAPSHOT` suffix is stripped, giving `factgraph-3.1.0.js`. |
 | `fact_graph_path` | `../fact-graph` | Where that checkout lives, resolved from the generated app's own directory. |
 | `form_builder_path` | `../form-builder` | Same. |
