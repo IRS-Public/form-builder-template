@@ -1,84 +1,141 @@
 name: Quality Checks
 
+# This repository is a cookiecutter, so almost nothing in it can be linted where it sits: every file
+# under `{{cookiecutter.repo_name}}/` is Jinja source, and the XML, JavaScript and Scala it contains
+# only become valid files after rendering. So the checks render first and then run the generated
+# app's own `make validate-*` targets against the result.
+#
+# Rendering also exercises hooks/post_gen_project.py, which is where the option matrix is actually
+# implemented: the answers turn features off by deleting files, so a broken deletion shows up as a
+# rendered app that no longer validates. The matrix below picks the combinations that delete the
+# most: everything on, the workspace off, and everything off.
+#
+# Nothing here builds the rendered app. `make site` would need fact-graph and form-builder published
+# to the local Ivy cache from two other repositories, and it is the libraries' job to stay
+# buildable, not this template's.
+
 on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
 
+permissions:
+  contents: read
 
-# Cancel redundant builds on same branch
+# Cancel redundant runs on the same branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # do not cancel redundant builds on main or release branches
+  # do not cancel redundant runs on main or release branches
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/heads/release/') }}
 
 env:
   JAVA_VERSION: 21
   SBT_VERSION: 1.11.4
-  FACT_GRAPH_PATH: fact-graph
-  CREDIT_ASSISTANT_PATH: credit-assistant
-  CREDIT_ASSISTANT_RESOURCES_PATH: src/main/resources/credit-assistant
+  NODE_VERSION: 22.16.0
+  COOKIECUTTER_VERSION: 2.6.0
 
 jobs:
+
   check-emails:
-    if: vars.build == 'false'
-    runs-on: ${{ vars.runner }}
+    name: Commit email policy
+    runs-on: ubuntu-latest
     steps:
-      - uses: IRSDigitalService/shared-actions/.github/actions/check-commit-emails@d39382f7b23cb52c0762b5e321f29f2ed66e8189
+      - name: Check commit author emails
+        uses: IRSDigitalService/shared-actions/.github/actions/check-commit-emails@d39382f7b23cb52c0762b5e321f29f2ed66e8189
         with:
-          repo_path: ${{ env.CREDIT_ASSISTANT_PATH }}
+          repo_path: form-builder-template
           base_ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || 'main' }}
 
-  call-publish-fact-graph:
-    if: vars.build == 'false'
-    uses: ./.github/workflows/publish-factgraph.yml
-    secrets:
-      SVC_ACCOUNT_PAT: ${{ secrets.SVC_ACCOUNT_PAT }}
-
-  quality-checks:
-    needs: [check-emails, call-publish-fact-graph]
-    if: vars.build == 'false'
+  template-inputs:
+    name: Template inputs
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+
+      - name: cookiecutter.json parses
+        run: python -c "import json; json.load(open('cookiecutter.json'))"
+
+      # The hook is itself rendered as a Jinja template before it runs, but every delimiter in it
+      # sits inside a string literal, so the file on disk is valid Python and a syntax error here is
+      # a syntax error after rendering too — caught before a generated app carries it.
+      - name: Generation hook is valid Python
+        run: python -m py_compile hooks/post_gen_project.py
+
+  render:
+    name: Render (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: all features
+            answers: ""
+          - name: no workspace
+            answers: "include_taxpert_workspace=no include_fact_explorer=no"
+          - name: minimal
+            answers: >-
+              include_all_screens=no include_scenario_mode=no
+              include_taxpert_workspace=no include_fact_explorer=no include_docker=no
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-    - name: Checkout Credit Assistant
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      with:
-        path: ${{ env.CREDIT_ASSISTANT_PATH }}
+      - name: Install xmllint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
 
-    - name: Checkout Fact Graph
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      with:
-        repository: IRSDigitalService/${{ env.FACT_GRAPH_PATH }}
-        path: ${{ env.FACT_GRAPH_PATH }}
-        token: ${{ secrets.SVC_ACCOUNT_PAT }}
+      - name: Set up Python 3.12
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
 
+      - name: Install cookiecutter
+        run: python -m pip install --disable-pip-version-check cookiecutter==${{ env.COOKIECUTTER_VERSION }}
 
-    - name: Get latest fact-graph commit SHA
-      id: fg_sha
-      working-directory: ${{ env.FACT_GRAPH_PATH }}
-      run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Render the template
+        run: |
+          mkdir -p "$RUNNER_TEMP/render"
+          cookiecutter . --no-input --output-dir "$RUNNER_TEMP/render" \
+            project_name="CI Smoke" ${{ matrix.answers }}
+          echo "APP_DIR=$RUNNER_TEMP/render/ci-smoke" >> "$GITHUB_ENV"
 
-    - name: Install sbt via shared action
-      uses: IRSDigitalService/shared-actions/.github/actions/setup_sbt_coursier@d39382f7b23cb52c0762b5e321f29f2ed66e8189
-      with:
-        java_version: ${{ env.JAVA_VERSION }}
-        sbt_version: ${{ env.SBT_VERSION }}
+      - name: Install Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
-    - name: Retrieve cached sbt dependencies
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 #v4.2.4
-      with:
-        path: ~/.ivy2/local
-        key: ${{ env.FACT_GRAPH_PATH }}-ivy-local-${{ steps.fg_sha.outputs.sha }}
+      # No lockfile is rendered, so `npm install` rather than `npm ci`.
+      - name: Install the rendered app's linters
+        working-directory: ${{ env.APP_DIR }}
+        run: npm install --prefix src/main/resources/ci-smoke
 
-    - name: Retrieve cached fact-graph target directory
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 #v4.2.4
-      with:
-        path: ${{ env.FACT_GRAPH_PATH}}/target
-        key: ${{ env.FACT_GRAPH_PATH}}-target-${{ steps.fg_sha.outputs.sha }}
+      - name: Validate XML against the RELAX NG schemas
+        working-directory: ${{ env.APP_DIR }}
+        run: make validate-xml
 
-    - name: Run Tests
-      working-directory: ${{ env.CREDIT_ASSISTANT_PATH }}
-      run: make test
+      - name: Reject HTML comments inside inline scripts
+        working-directory: ${{ env.APP_DIR }}
+        run: make validate-templates
+
+      - name: Lint JavaScript
+        working-directory: ${{ env.APP_DIR }}
+        run: make validate-js
+
+      - name: Install sbt via shared action
+        uses: IRSDigitalService/shared-actions/.github/actions/setup_sbt_coursier@d39382f7b23cb52c0762b5e321f29f2ed66e8189
+        with:
+          java_version: ${{ env.JAVA_VERSION }}
+          sbt_version: ${{ env.SBT_VERSION }}
+
+      - name: Check the rendered Scala formatting
+        working-directory: ${{ env.APP_DIR }}
+        run: make validate-scala

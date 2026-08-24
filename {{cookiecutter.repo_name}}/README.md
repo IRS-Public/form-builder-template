@@ -61,7 +61,8 @@ make dev          # http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecu
 ```
 {% if cookiecutter.include_docker == 'yes' %}
 Or skip the local toolchain entirely with `make up`, which builds the libraries, generates the site,
-serves it, and leaves an `sbt ~run` watcher regenerating on every edit. Same URL, same flags.
+serves it, and leaves an `sbt ~run` watcher regenerating on every edit. Same URL, same developer
+surfaces.
 {% endif %}
 `make help` lists every target. The ones you will use:
 

@@ -1,38 +1,38 @@
 # Form Builder Template
 
-A [cookiecutter](https://cookiecutter.readthedocs.io/) template that generates a new Form Builder
-application: multi-language, questionnaires built on
+A [cookiecutter](https://cookiecutter.readthedocs.io/) template that generates a new, multi-language
+questionnaire application built on
 [`gov.irs::form-builder`](https://github.com/IRS-Public/form-builder), a Scala library that turns
-combines the Fact Graph, Fact Dictionaries, Flow XML and locales into a site. Optional extensions such as [Taxpert]
-(https://github.com/IRS-Public/taxpert) can be dropped in as part of the generation process as well.
+Flow XML, a Fact Dictionary and locale files into a site, evaluated against the Fact Graph rules
+engine. Optional extensions such as [Taxpert](https://github.com/IRS-Public/taxpert) can be included
+as part of the generation process.
 
-Form Builder Template deliberately generates a lightweight application. It assumes that you want to model complex 
-business logic using the Fact Graph (such as, but not limited to, a tax code), but don't 
-want to reinvent the wheel in terms of presentation, navigation, i18n, Section 508 compliance/a11y, etc.
+Form Builder Template deliberately generates a lightweight application. It assumes you want to model
+complex business logic with the Fact Graph, such as a tax code, without building your own
+presentation layer, navigation, internationalization, or Section 508 accessibility compliance.
 
-The flow parser, the site generators, the Thymeleaf engine, the node templates, the locales, the browser 
-theme, the flow runtime and Author Mode all belong
-to the library. A generated application gets its own Flow XML, its Fact Dictionary, its locales, its
-brand CSS, and a `Main.scala` of about 40 lines. Everything genuinely per-application is expressed
-as a registration on that `Main.scala`, such as a custom node type, a custom input type, an
-overridden template, or an overridden locale key.
+The flow parser, the site generators, the Thymeleaf engine, the node templates, the locales, the
+browser theme, the flow runtime and Author Mode all belong to the library. A generated application
+gets its own Flow XML, its Fact Dictionary, its locales, its brand CSS, and a `Main.scala` of about
+40 lines. Everything genuinely specific to the application is expressed as a registration on that
+`Main.scala`: a custom node type, a custom input type, an overridden template, or an overridden
+locale key.
 
-See the [onboarding guide](docs/ONBOARDING.md) to quickstart a new Form Builder application.
+See the [onboarding guide](docs/ONBOARDING.md) to get started with a new Form Builder application.
 
 ## Where this fits
 
-| Component                                                                        | What it is                                                                                                                                                                                                                                                                                                                                          |
-|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`fact-graph`](https://github.com/IRS-Public/fact-graph)                         | `gov.irs::factgraph`, the rules engine. Cross-compiled: a JVM jar this library builds against, and a Scala.js bundle the browser runs.                                                                                                                                                                                                              |
-| `form-builder`                                                                   | `gov.irs::form-builder`, presentation generator, including parsers, Thymeleaf engine, node templates, locales, RELAX NG schemas, theme, and flow runtime.                                                                                                                                                                                 |
-| [`taxpert`](https://github.com/IRS-Public/taxpert)                               | The workspace UI (`taxpert` on npm, in that repo's `packages/ui`): global nav, audit panel, tool panels. Optional. An application can ship without it. That repo's `packages/fact-explorer` is a React and Vite SPA that visualizes any Form Builder app's flow and facts as a graph, reading the JSON this library emits under `--formBuilderGraph`. |
-| [**`form-builder-template`** (here)](https://github.com/IRS-Public/form-builder-template) | A cookiecutter that generates a new Form Builder app, with optional extensions like Taxpert.                                                                                                                                                                                                                                                        |
-| [`form-builder-examples`](https://github.com/IRS-Public/form-builder-examples)   | Reference applications that leverage the three core libraries.                                                                                                                                                                                                                                                                                      |
+| Component | What it is |
+|---|---|
+| [`fact-graph`](https://github.com/IRS-Public/fact-graph) | `gov.irs::factgraph`, the rules engine. Cross-compiled: a JVM jar this library builds against, and a Scala.js bundle the browser runs. |
+| `form-builder` | `gov.irs::form-builder`, the presentation generator: parsers, the Thymeleaf engine, node templates, locales, RELAX NG schemas, the theme, the flow runtime, and Author Mode. |
+| [`taxpert`](https://github.com/IRS-Public/taxpert) | The workspace UI (`taxpert` on npm, in that repo's `packages/ui`): global nav, audit panel, tool panels. Optional, and an application can ship without it. That repo's `packages/fact-explorer` is a React and Vite SPA that visualizes any Form Builder app's flow and facts as a graph, reading the JSON this library emits under `--formBuilderGraph`. |
+| [**`form-builder-template`** (here)](https://github.com/IRS-Public/form-builder-template) | A cookiecutter template that generates a new Form Builder app, with optional extensions like Taxpert. |
+| [`form-builder-examples`](https://github.com/IRS-Public/form-builder-examples) | Reference applications built on the libraries above. |
 
-Taxpert and other extensions like Author Mode, 
-Fact Explorer, Docker, etc. are optional. An
-application generated with `include_taxpert_workspace=no` has no dependency on it at all, and still
-gets the theme and the flow runtime, both of which ship inside the form-builder jar.
+Taxpert and other extensions such as Author Mode, Fact Explorer, and Docker support are optional. An
+application generated with `include_taxpert_workspace=no` has no dependency on Taxpert at all, and
+still gets the theme and the flow runtime, both of which ship inside the form-builder jar.
 
 
 # Contributing

@@ -1,11 +1,15 @@
+# The previous version of this file watched `/.github` for an npm manifest. There has never been a
+# package.json there, so nothing was ever updated; the pdf-lib ignore rule was inherited from an
+# application, and this template emits no pdf-lib.
+#
+# Only github-actions. The npm manifests in this repository are Jinja templates —
+# `{{cookiecutter.repo_name}}/package.json` and the resources workspace's — and Dependabot has no
+# way to parse a version constraint that has not been rendered yet. Their dependency versions move
+# when someone edits the template, and the render job in quality-checks.yml is what proves the
+# result still installs and lints.
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/.github"
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      - dependency-name: "pdf-lib"
-        update-types: ["version-update:semver-major"]  # Optional: ignore v2.x if released
