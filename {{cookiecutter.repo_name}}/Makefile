@@ -94,10 +94,10 @@ rebuild: ## Tear down the stack, drop its volumes, and rebuild images from scrat
 	docker compose build --no-cache
 
 .PHONY: copy-fg
-copy-fg: ## Copy the compiled Fact Graph bundle from the sibling repository
-	@# Skipped rather than fatal when the sibling has not been built: this runs ahead of every
+copy-fg: ## Copy the compiled Fact Graph bundle from the fact-graph checkout
+	@# Skipped rather than fatal when that checkout has not been built: this runs ahead of every
 	@# dev server and production build, and someone working on templates or locales does not
-	@# need an sbt-built fact-graph sitting next door.
+	@# need an sbt-built fact-graph to hand.
 	@if [ -f $(FG_SOURCE_DIR)/main.mjs ]; then \
 		cp $(FG_SOURCE_DIR)/main.mjs $(FG_TARGET_DIR)/factgraph-{{ cookiecutter.factgraph_version|replace('-SNAPSHOT', '') }}.js; \
 		cp $(FG_SOURCE_DIR)/main.mjs.map $(FG_TARGET_DIR); \

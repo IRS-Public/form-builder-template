@@ -50,7 +50,7 @@ This codebase is dedicated to the public domain under the [Creative Commons Zero
 >
 > Use of the code in this repository is at your own risk. This repository is not intended for production use or public consumption as a finalized product.
 >
-> Artificial Intelligence was used to help generate parts of this codebase.
+> Artificial Intelligence was used in generating portions of this codebase.
 
 
 # Authorities

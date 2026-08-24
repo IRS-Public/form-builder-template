@@ -2,7 +2,7 @@
 
 Cookiecutter renders every file in the template and then runs this. Deleting here rather than
 wrapping each file in a Jinja conditional keeps the templates readable as the files they will
-become — a Makefile full of Jinja tags is a Makefile nobody can check by eye.
+become.
 
 Note that this script is itself rendered as a Jinja template before it runs, which is why the
 answers arrive as literals below and why nothing here may contain a Jinja delimiter, comments
@@ -212,8 +212,8 @@ if not INCLUDE_TAXPERT_WORKSPACE:
     )
     drop(RESOURCES / "website-static" / "styles" / "utilities")
     # The Docker build's equivalent of `make copy-shared-ui`, and the CI job's checkout of the
-    # package. Both would fail outright without a ../taxpert beside this repo, so neither can be left
-    # behind as a harmless leftover.
+    # package. Both would fail outright without a taxpert checkout at taxpert_path, so neither can
+    # be left behind as a harmless leftover.
     if INCLUDE_DOCKER:
         drop_blocks("Dockerfile", "vendor/taxpert")
         drop_lines(".dockerignore", "website-static/vendor/taxpert/")
@@ -345,7 +345,7 @@ if INCLUDE_FACT_EXPLORER:
     # Discovery, not registration. The hook deliberately writes nothing outside the project it
     # generates: cookiecutter runs it with cwd inside this repo and promises nothing about what is
     # above, so appending to a Fact Explorer's app list would silently create or mutate a stray file
-    # for anyone generating outside the monorepo. The emitted fact-explorer.app.json is the
+    # for anyone generating elsewhere on disk. The emitted fact-explorer.app.json is the
     # registration, and build-registry.mjs finds it — so all that is left to do here is say so.
     NEXT_STEPS += """
   This app ships a fact-explorer.app.json, so Fact Explorer finds it once the repo sits in the apps
@@ -364,9 +364,9 @@ if INCLUDE_ALL_SCREENS and not INCLUDE_TAXPERT_WORKSPACE:
   so on this app the page arrives with only the theme's styling. styles/all-screens.css says so too.
 """
 
-# The library paths, as answered — not assumed to be siblings. Printed back so a non-default
-# answer (a path elsewhere on disk, or a monorepo layout like this one) is visible immediately
-# rather than discovered the first time `make bootstrap` fails to find one.
+# The library paths, as answered, rather than assumed to be siblings. Printed back so a
+# non-default answer (a path elsewhere on disk) is visible immediately rather than discovered
+# the first time `make bootstrap` fails to find one.
 LIB_PATHS = [("fact-graph", FACT_GRAPH_PATH), ("form-builder", FORM_BUILDER_PATH)]
 if INCLUDE_TAXPERT_WORKSPACE:
     LIB_PATHS.append(("taxpert", TAXPERT_PATH))

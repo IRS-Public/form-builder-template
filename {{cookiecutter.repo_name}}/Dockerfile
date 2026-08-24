@@ -23,7 +23,7 @@
 # flags on `sbt run` — changing them means rebuilding this image. This one passes none, so the
 # image is the product and nothing else.
 #
-# Each additional context keeps its own .dockerignore, not this repo's — a sibling library with a
+# Each additional context keeps its own .dockerignore rather than this repo's. A library context with a
 # heavy target/ or node_modules/ and no .dockerignore of its own transfers it into the build.
 
 # ---- shared sbt base --------------------------------------------------------------

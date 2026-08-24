@@ -5,23 +5,24 @@
 # diffs the two `out/` trees. Useful for any change that is meant to be output-neutral (a refactor,
 # a template extraction, a dependency bump), where the review question is "which hunks did I mean?"
 #
-# Nothing here names an app: the script locates itself, works out which subdirectory of the
-# monorepo it belongs to, and builds the `site` target of that subdirectory's Makefile. The copy in
+# Nothing here names an app: the script locates itself, works out where it sits inside its own
+# repository, and builds the `site` target of that directory's Makefile. The copy in
 # every Form Builder app is byte-identical, which is the point.
 
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(git -C "$APP_DIR" rev-parse --show-toplevel)"
-# "." when the app *is* the repo — a generated app is its own repo, while in the monorepo it
-# is a subdirectory. `make -C dir/.` and `dir/./out` both behave, so one form covers both.
+# "." when the app *is* the repo. A generated app is its own repo, while in a multi-app repo
+# such as form-builder-examples it is a subdirectory. `make -C dir/.` and `dir/./out` both
+# behave, so one form covers both.
 APP_SUBDIR="${APP_DIR#"$REPO_ROOT"}"
 APP_SUBDIR="${APP_SUBDIR#/}"
 APP_SUBDIR="${APP_SUBDIR:-.}"
 
 BASE_BRANCH="${BASE_BRANCH:-main}"
 CURRENT_BRANCH="$(git -C "$APP_DIR" branch --show-current)"
-WORKTREE_DIR="${WORKTREE_DIR:-/tmp/taxpert-$BASE_BRANCH-$(basename "$APP_DIR")}"
+WORKTREE_DIR="${WORKTREE_DIR:-/tmp/diff-out-$BASE_BRANCH-$(basename "$APP_DIR")}"
 LOGS_PREFIX="[$(basename "${BASH_SOURCE[0]}")]:"
 
 cleanup() {
