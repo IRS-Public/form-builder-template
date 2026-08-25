@@ -1,5 +1,5 @@
 {
-  "project_name": "My Tax Tool",
+  "project_name": "My Application",
   "repo_name": "{{ cookiecutter.project_name|lower|replace(' ', '-') }}",
   "app_id": "{{ cookiecutter.repo_name }}",
   "url_segment": "{{ cookiecutter.repo_name }}",

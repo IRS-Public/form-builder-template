@@ -1,7 +1,9 @@
 # ONBOARDING
 ## Requirements
 
-Running the template needs only `cookiecutter`. To build the app, you need the other dependencies.
+Running the template needs only `cookiecutter`. To build the app, you need the other dependencies or Docker. See [Form 
+Builder 
+Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template.
 
 | Requirement | Why |
 |---|---|
@@ -12,12 +14,8 @@ Running the template needs only `cookiecutter`. To build the app, you need the o
 | A `fact-graph` checkout | See below. |
 | A `form-builder` checkout | See below. |
 
-### Resolving the two Scala libraries
-
-The generated `build.sbt` declares one dependency, `gov.irs %% "form-builder"`, and no resolvers.
-So both `gov.irs::form-builder` and the `gov.irs::factgraph` it pulls in transitively are resolved
-from the local Ivy cache at `~/.ivy2/local`, which is already first in sbt's default resolver chain.
-Getting them there means publishing each once from a checkout:
+## Quickstart
+First ensure you have copies of the Fact Graph and Form Builder published to your local ivy cache.
 
 ```bash
 git clone https://github.com/IRS-Public/fact-graph.git
@@ -27,21 +25,6 @@ git clone https://github.com/IRS-Public/form-builder.git
 cd form-builder && sbt publishLocal
 ```
 
-`make bootstrap` in the generated app runs the equivalent of both, so in practice you clone the two
-repositories and then let the Makefile do it.
-
-There is no shortcut to look for. Neither library is published to a remote artifact registry —
-not `gov.irs::factgraph` 3.1.0-SNAPSHOT, and not `gov.irs::form-builder` — so publishing locally
-from a checkout is the only way to get either one. That is also why the generated `build.sbt`
-carries no `resolvers +=` line and no credentials: there is no registry to point sbt at, and
-nothing to authenticate against.
-
-`fact-graph` also supplies the Scala.js browser bundle. `make copy-fg` looks for it at
-`<fact_graph_path>/js/target/scala-3.3.6/factgraph-fastopt/main.mjs`, which is what `sbt fastOptJS`
-produces, and skips with a message rather than failing if it is not there.
-
-## Quickstart
-
 ```bash
 cookiecutter form-builder-template
 ```
@@ -49,15 +32,51 @@ cookiecutter form-builder-template
 Answer the prompts, then:
 
 ```bash
-cd my-tax-tool
+cd path/to/app-name
 make bootstrap    # publish the libraries, install npm deps, vendor their assets
 make dev          # http://localhost:3010/app/my-tax-tool/
 ```
+Or run everything in a single step in Docker with `make up`
+
+### Resolving the two Scala libraries
+
+The generated `build.sbt` declares one dependency, `gov.irs %% "form-builder"`, and no resolvers.
+So both `gov.irs::form-builder` and the `gov.irs::factgraph` it pulls in transitively are resolved
+from the local Ivy cache at `~/.ivy2/local`, which is already first in sbt's default resolver chain.
+Getting them there means publishing each once from a checkout:
+
+`make bootstrap` in the generated app runs the equivalent of both, so in practice you clone the two
+repositories and then let the Makefile do it. `fact-graph` also supplies the Scala.js browser bundle. `make copy-fg` 
+looks for it at
+`<fact_graph_path>/js/target/scala-3.3.6/factgraph-fastopt/main.mjs`, which is what `sbt fastOptJS`
+produces, and skips with a message rather than failing if it is not there.
 
 The generated app lands in whichever directory you ran `cookiecutter` from, in a directory named by
 your `repo_name` answer. Running it from inside `form-builder-template/` itself would nest the new
 app inside the template, since cookiecutter's default output directory is `.`. The post-generation
 hook detects that one case and moves the app up a level. An explicit `--output-dir` is left alone.
+
+## Output Scaffold
+
+The starter flow and facts exercise every integration point rather than being minimal, so a freshly generated app
+demonstrates each mechanism you are likely to need.
+
+- **Two flow pages**, one per module, with an enum, a boolean and a dollar question, a `<hint>`, an
+  `<fg-show>`, a `<modal-dialog>` opened by a `<modal-link>`, conditional visibility through
+  `if-true`, an info alert and a knockout alert.
+- **Nine facts** across two files: an enum's options and the writable enum that picks from them, an
+  `IsComplete` gate, a `Switch` that turns the chosen year into an `Int`, a `Dollar` constant, two
+  more writables, and two derived facts.
+- **One determination** registered with the workspace, over `/qualifies`, with its inputs decomposed
+  into two sections. Answering the flow moves the Outcome tracker's ring from part-drawn to a spoken
+  outcome, which is one assertion that flow, fact graph, registration and workspace are all wired.
+- **Two test suites**: `FlowSpec` asserts the flow parses with every fact path resolving and every
+  route unique, and `EligibilitySpec` asserts the determination is right in three cases, including
+  the one where it is incomplete rather than false.
+
+When you start on your own product, replace the domain content and keep these shapes.
+
+
 
 ## The questions
 
@@ -83,22 +102,16 @@ hook detects that one case and moves the app up a level. An explicit `--output-d
 | `include_docker` | `yes` | `Dockerfile`, `nginx.conf`, the two compose files, and the make targets that wrap them. |
 
 The five `include_` options each accept `yes` or `no`, with `yes` first and therefore the default.
-
-Three more keys in `cookiecutter.json` are not asked. `__package_path` is `scala_package` with dots
-turned into slashes, and names the Scala source directories. `__js_name` is `app_id` in camelCase,
-and names the symbols exported from `website-static/js/taxpert/`. `_copy_without_render` keeps the
-starter images out of Jinja rendering.
-
 `repo_name`, `app_id`, `url_segment` and `storage_prefix` are independent variables even though one
-answer sets all four, and real applications do diverge. `credit-assistant` lives in a directory of
+answer sets all four, and real applications do diverge. For instance, `credit-assistant` lives in a directory of
 that name, keeps its resources under `credit-assistant/`, and serves from `/app/eitc`. Two apps
 generated with different `storage_prefix` values can be served from one origin without sharing a
-fact graph, a watchlist or a panel layout.
+fact graph, taxpert, or other layouts.
 
 ## What each `include_` answer changes
 
 `hooks/post_gen_project.py` renders every file first and then deletes what the answers turned off.
-Pruning after the fact rather than wrapping each file in a Jinja conditional keeps the templates
+Pruning after the fact rather than wrapping each file keeps the templates
 readable as the files they will become.
 
 | Answer | `no` removes |
@@ -122,7 +135,8 @@ Form Builder Graph, the fact dictionary and the engine bundle, all of which belo
 One combination has a visible consequence, and the hook prints a note about it. With
 `include_all_screens=yes` and `include_taxpert_workspace=no`, Browse All still lists every screen,
 but its toolbar and its two layout modes belong to the workspace, so the page arrives with only the
-theme's styling on it.
+theme's styling on it. We recommend not using this combination -- if you want to use all screens, you should include 
+Taxpert.
 
 ## What else the hook does
 
@@ -206,52 +220,19 @@ my-tax-tool/
 └── src/test/scala/<package>/         FlowSpec and EligibilitySpec
 ```
 
-## What the starter content is for
-
-The starter flow and facts exercise every seam rather than being minimal, so a freshly generated app
-demonstrates each mechanism you are likely to need.
-
-- **Two flow pages**, one per module, with an enum, a boolean and a dollar question, a `<hint>`, an
-  `<fg-show>`, a `<modal-dialog>` opened by a `<modal-link>`, conditional visibility through
-  `if-true`, an info alert and a knockout alert.
-- **Nine facts** across two files: an enum's options and the writable enum that picks from them, an
-  `IsComplete` gate, a `Switch` that turns the chosen year into an `Int`, a `Dollar` constant, two
-  more writables, and two derived facts.
-- **One determination** registered with the workspace, over `/qualifies`, with its inputs decomposed
-  into two sections. Answering the flow moves the Outcome tracker's ring from part-drawn to a spoken
-  outcome, which is one assertion that flow, fact graph, registration and workspace are all wired.
-- **Two test suites**: `FlowSpec` asserts the flow parses with every fact path resolving and every
-  route unique, and `EligibilitySpec` asserts the determination is right in three cases, including
-  the one where it is incomplete rather than false.
-
-When you start on your own product, replace the domain content and keep these shapes.
-
 ## Seeing the generated app in Fact Explorer
 
 With `include_fact_explorer=yes` the repository ships a `fact-explorer.app.json`, and that file is
-the registration. Fact Explorer lives in the [taxpert](https://github.com/IRS-Public/taxpert)
+the registration to Fact Explorer. Fact Explorer lives in the [Taxpert](https://github.com/IRS-Public/taxpert)
 repository at `packages/fact-explorer`. Its `build-registry` script globs
 `<apps dir>/*/fact-explorer.app.json`, where the apps directory is `FORM_BUILDER_APPS_DIR`, or
 `<taxpert repo>/apps` by default. Putting the repository there, as a clone or a symlink, is the whole
-of the wiring. There is no list to edit.
+of the wiring.
 
 ```bash
 cd my-tax-tool && make fact-explorer
 ln -s "$PWD" /path/to/taxpert/apps/          # once
 cd /path/to/taxpert/packages/fact-explorer
 npm run build-registry && npm run dev
-# then open http://localhost:5180/fact-explorer/my-tax-tool
+# then open http://localhost:5180/fact-explorer/my-app
 ```
-
-## Gotchas
-
-- **A new build flag must not be a prefix of an existing one.** The hook removes a flag from the
-  generated `Makefile` and `docker-compose.override.yml` with a plain string replace, so adding a
-  `--scenario` flag alongside `--scenarioMode` would leave `Mode` behind in every `sbt run` line.
-- **`make diff-out` needs commits.** The hook stages everything and commits nothing, so the script
-  has no `main` to compare against until you make the first commit.
-- **The Docker build needs the sibling paths spelled out** when you invoke `docker build` directly.
-  `docker compose` passes them from `additional_contexts`. A bare `docker build` needs three
-  `--build-context` flags, which the `Dockerfile` header shows.
-- **Editing form-builder or fact-graph does not reach a running container.** Both are resolved from
-  the image's own Ivy cache rather than a bind mount, so `make rebuild` is what picks up a change.
