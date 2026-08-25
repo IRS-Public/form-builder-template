@@ -3,7 +3,9 @@
 
 Running the template needs only `cookiecutter`. To build the app, you need the other dependencies or Docker. See [Form 
 Builder 
-Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template.
+Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template. To understand the difference between Taxpert, Form Builder and the Fact Graph, see [this doc]
+(https://github.
+com/IRS-Public/taxpert/blob/main/docs/adr/taxpert-form-builder-fact-graph.md).
 
 | Requirement | Why |
 |---|---|
