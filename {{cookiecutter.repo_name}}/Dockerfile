@@ -87,4 +87,30 @@ RUN --mount=type=cache,target=/root/.cache/coursier \
 FROM nginx:1.27-alpine AS runtime
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /build/{{ cookiecutter.repo_name }}/out /usr/share/nginx/html
+
+# Where to open the app, printed once at container start — the Docker counterpart of the banner
+# `sbt run --serve` prints for `make dev`, which this image has no equivalent of: nothing here runs
+# with --serve, so without this line `docker compose up` finishes with an access log and no address.
+#
+# nginx's own entrypoint runs every *executable* /docker-entrypoint.d/*.sh in name order before
+# exec'ing nginx, so the 99- prefix puts this last, immediately above the first request. It must be
+# executable or the entrypoint prints "not executable, ignoring" and moves on — hence --chmod.
+#
+# APP_PORT is the HOST's published port, which the container has no way to discover: it sees only
+# its own :80. docker-compose.yml maps {{ cookiecutter.dev_port }}:80 and passes the same number back in, so change
+# the two together. The base path is baked into the generated site, so it is written in rather than
+# configured.
+ENV APP_PORT={{ cookiecutter.dev_port }}
+COPY --chmod=0755 <<'EOF' /docker-entrypoint.d/99-print-url.sh
+#!/bin/sh
+# The dev overlay points nginx at a volume the watcher fills in later, so this can legitimately start
+# with an empty web root. Say so rather than printing an address that 404s for the next few minutes.
+printf '\n\033[32m\033[1m✓\033[0m \033[1m{{ cookiecutter.project_name }}\033[0m \033[36mready\033[0m\n'
+printf '  \033[1mLocal:\033[0m   \033[36mhttp://localhost:%s/app/{{ cookiecutter.url_segment }}/\033[0m\n' "$APP_PORT"
+if [ ! -f /usr/share/nginx/html/app/{{ cookiecutter.url_segment }}/index.html ]; then
+  printf '  \033[33m⚠ no site in the web root yet — the watcher is still generating it; refresh once it lands\033[0m\n'
+fi
+printf '\n'
+EOF
+
 EXPOSE 80

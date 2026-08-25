@@ -17,28 +17,40 @@ com/IRS-Public/taxpert/blob/main/docs/adr/taxpert-form-builder-fact-graph.md).
 | A `form-builder` checkout | See below. |
 
 ## Quickstart
-First ensure you have copies of the Fact Graph and Form Builder published to your local ivy cache.
 
 ```bash
+cd path/to/form-builder-template
+cookiecutter .
+```
+and answer the prompts. 
+
+If you included Taxpert extensions, make sure that is running first:
+```bash
+cd path/to/taxpert
+make up
+```
+
+Within you application directory
+```bash
+cd path/to/my-app
+make up # to run everything in docker (recommended)
+```
+or to run everything locally:
+```bash
+cd ~
 git clone https://github.com/IRS-Public/fact-graph.git
 cd fact-graph && sbt compile fastOptJS publishLocal
 
 git clone https://github.com/IRS-Public/form-builder.git
 cd form-builder && sbt publishLocal
-```
 
-```bash
-cookiecutter form-builder-template
-```
-
-Answer the prompts, then:
-
-```bash
 cd path/to/app-name
 make bootstrap    # publish the libraries, install npm deps, vendor their assets
-make dev          # http://localhost:3010/app/my-tax-tool/
-```
-Or run everything in a single step in Docker with `make up`
+make dev          # http://localhost:3010/app/my-tax-tool/. Port and resource path are whatever you specified in the cookiecutter prompt 
+``` 
+
+Note the use of http (not https) and the trailing slash.
+
 
 ### Resolving the two Scala libraries
 

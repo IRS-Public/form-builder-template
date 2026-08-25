@@ -25,4 +25,8 @@ services:
         taxpert: {{ cookiecutter.taxpert_path }}
     ports:
       - "{{ cookiecutter.dev_port }}:80"
+    environment:
+      # The port the startup banner tells you to open. The container sees only its own :80, so this
+      # has to repeat the published port above — change both, or the printed address is wrong.
+      APP_PORT: "{{ cookiecutter.dev_port }}"
     restart: unless-stopped
