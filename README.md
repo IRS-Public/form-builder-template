@@ -8,7 +8,7 @@ presentation layer, navigation, internationalization, or styling components to m
 browser theme, flow runtime and (optionally) a web-GUI to update presentation and business logic, all out of the box.
 
 See the [onboarding guide](docs/ONBOARDING.md) to get started with a new Form Builder application. See [Form Builder 
-Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template.
+Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template. To understand the difference between Taxpert, Form Builder and the Fact Graph, see [this doc](https://github.com/IRS-Public/taxpert/blob/main/docs/adr/taxpert-form-builder-fact-graph.md).
 
 ## Where this fits
 
