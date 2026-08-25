@@ -144,6 +144,11 @@ if not INCLUDE_ALL_SCREENS:
         RESOURCES / "website-static" / "js" / "all-screens-bootstrap.js",
         RESOURCES / "website-static" / "styles" / "all-screens.css",
     )
+    # And its line in the container's startup banner. --allScreens is gone from the watcher by now,
+    # so the page is never generated; the banner would be printing an address that 404s, which is
+    # worse than a shorter banner.
+    if INCLUDE_DOCKER:
+        drop_lines("Dockerfile", "Browse All:")
 
 if not INCLUDE_TAXPERT_WORKSPACE:
     # A "no" here drops taxpert entirely — the dependency, not just the surfaces it draws.
@@ -288,6 +293,40 @@ if not INCLUDE_FACT_EXPLORER:
     strip_flag("--formBuilderGraph")
     drop("fact-explorer.app.json")
     drop_blocks("Makefile", "fact-explorer:")
+    # ...and the registration that mounts this repo into the Fact Explorer in the taxpert stack.
+    # The descriptor it registers is the file just deleted, so what is left would mount a directory
+    # Fact Explorer then skips for having nothing to read.
+    drop("scripts/register-with-taxpert.sh")
+    drop_blocks(
+        "Makefile",
+        "register-explorer:",
+        "unregister-explorer:",
+    )
+    replace_in("Makefile", ("up: register-explorer ##", "up: ##"))
+    if INCLUDE_DOCKER:
+        drop_lines("Dockerfile", "Fact Explorer:")
+        # The prose in `up` and `down` that described the registration, which no longer happens.
+        # Left in, it would send someone to a make target this app does not have and a URL that
+        # answers 404 — worse than the shorter comment, since both read as instructions.
+        drop_lines("Makefile", "fact-explorer/")
+        replace_in(
+            "Makefile",
+            (
+                "\t@# Three surfaces come up together, and only the first two are this compose project's:\n",
+                "\t@# Two surfaces come up together, both of them this compose project's:\n",
+            ),
+            (
+                "\t@# The third is a prerequisite rather than a service here because Fact Explorer holds every app\n"
+                "\t@# at once — one instance beside them all, not one per app fighting over port 5180.\n",
+                "",
+            ),
+            (
+                "\t@# Leaves the Fact Explorer registration in place: that stack holds every app at once, and\n"
+                "\t@# stopping this one is no reason to take this app out of its menu. `make unregister-explorer`\n"
+                "\t@# is the deliberate removal, for a repo you are about to move or delete.\n",
+                "",
+            ),
+        )
 
 if not INCLUDE_DOCKER:
     drop(
@@ -299,6 +338,13 @@ if not INCLUDE_DOCKER:
     )
     # And the make targets that wrap them, so `make help` never lists a command that cannot work.
     drop_blocks("Makefile", "docker compose")
+    # Registration is part of `make up` and means nothing without it: the fragment it writes mounts
+    # this repo into a *container*. Fact Explorer still reads this app natively, through
+    # `make fact-explorer` and taxpert's own apps directory — which is what the note at the end of
+    # this script describes when there is no Docker here to do it automatically.
+    drop("scripts/register-with-taxpert.sh")
+    drop_blocks("Makefile", "register-explorer:", "unregister-explorer:")
+    replace_in("Makefile", ("up: register-explorer ##", "up: ##"))
 
 for script in (ROOT / "scripts").glob("*.sh"):
     script.chmod(0o755)
@@ -332,22 +378,37 @@ NEXT_STEPS = (
 )
 
 if INCLUDE_DOCKER:
-    # The way in for someone who has not installed a JDK, sbt or node - which is most people the
-    # first time they open a generated repo. Worth naming here rather than leaving in a compose file
-    # nobody opens until something is already wrong.
+    # What `make up` actually leaves running, named here rather than in a compose file nobody opens
+    # until something is already wrong. Author Mode's API is the one thing worth a sentence: it
+    # writes to the flow XML and the fact dictionary in this working tree, which is why it is bound
+    # to loopback rather than published.
     NEXT_STEPS += """
-  Or skip the local toolchain entirely: `make up` builds the sibling libraries, generates the site
-  and serves it, and leaves a `sbt ~run` watcher regenerating it on every edit. Same URL, same
-  flags as `make dev`; refresh the browser after a change.
+  `make up` needs no local toolchain at all — no JDK, no sbt, no node. It builds the sibling
+  libraries, generates the site, serves it, and leaves a `sbt ~run` watcher regenerating it on
+  every edit. Refresh the browser after a change.
+
+  Author Mode comes up with it, at .../author/, backed by an API on 127.0.0.1:3004. That API edits
+  the flow XML and the fact dictionary on disk in this repo, so it is deliberately reachable only
+  from this machine.
 """
 
 if INCLUDE_FACT_EXPLORER:
-    # Discovery, not registration. The hook deliberately writes nothing outside the project it
-    # generates: cookiecutter runs it with cwd inside this repo and promises nothing about what is
-    # above, so appending to a Fact Explorer's app list would silently create or mutate a stray file
-    # for anyone generating elsewhere on disk. The emitted fact-explorer.app.json is the
-    # registration, and build-registry.mjs finds it — so all that is left to do here is say so.
-    NEXT_STEPS += """
+    # How this repo reaches Fact Explorer, which differs by whether there is a container to do it.
+    #
+    # Note what this hook still does not do: it writes nothing outside the project it generates.
+    # Cookiecutter runs it with cwd inside this repo and promises nothing about what is above, so
+    # registering with a Fact Explorer *here* would create or mutate a stray file for anyone
+    # generating elsewhere on disk. `make up` does it instead — later, from a repo whose location is
+    # settled, and idempotently, so moving this repo and re-running fixes the path.
+    NEXT_STEPS += (
+        """
+  Fact Explorer comes up with `make up` too. It runs in the taxpert stack rather than this one —
+  one instance holding every app at once — so `make up` writes a bind mount for this repo into
+  taxpert's docker-compose.apps.d/ and starts it. A symlink into taxpert/apps would not do: Docker
+  carries the link rather than its target, and the app would silently not appear.
+"""
+        if INCLUDE_DOCKER
+        else """
   This app ships a fact-explorer.app.json, so Fact Explorer finds it once the repo sits in the apps
   directory it scans — taxpert/apps, or wherever FORM_BUILDER_APPS_DIR points. To see the flow and
   fact dictionary as a graph:
@@ -356,6 +417,7 @@ if INCLUDE_FACT_EXPLORER:
       ln -s "$PWD" /path/to/taxpert/apps/          # once
       cd /path/to/taxpert/packages/fact-explorer && npm run build-registry && npm run dev
 """
+    )
 
 # One consequence worth saying out loud rather than leaving to be discovered in the browser.
 if INCLUDE_ALL_SCREENS and not INCLUDE_TAXPERT_WORKSPACE:
@@ -372,6 +434,23 @@ if INCLUDE_TAXPERT_WORKSPACE:
     LIB_PATHS.append(("taxpert", TAXPERT_PATH))
 libs_summary = ", ".join(f"{name} at {path}" for name, path in LIB_PATHS)
 
+# One command or three, depending on whether there is a container to run. `make up` is the whole of
+# the Docker path on purpose — it publishes the flow, brings up Author Mode and registers this repo
+# with Fact Explorer — so it is what a generated repo should lead with. `make bootstrap` and
+# `make dev` are the native path, and need a JDK, sbt and node already installed.
+if INCLUDE_DOCKER:
+    GETTING_STARTED = """      cd {repo}
+      make up               # the whole stack, no local toolchain needed
+
+  Then, whenever you would rather run it natively:
+
+      make bootstrap        # publish the libraries, vendor their assets
+      make dev              # http://localhost:{port}/app/{segment}/"""
+else:
+    GETTING_STARTED = """      cd {repo}
+      make bootstrap        # publish the libraries, vendor their assets
+      make dev              # http://localhost:{port}/app/{segment}/"""
+
 print(
     """
   {name} is ready in ./{repo}
@@ -381,14 +460,17 @@ print(
   than an assumption that the libraries sit beside it — if one of them moves, the Makefile{docker_var}
   is where to update the path.
 
-      cd {repo}
-      make bootstrap        # publish the libraries, vendor their assets
-      make dev              # http://localhost:{port}/app/{segment}/
+{getting_started}
 {next_steps}""".format(
         name=PROJECT_NAME,
         repo=REPO_NAME,
         libs=libs_summary,
-        taxpert_var=" / taxpert_path" if INCLUDE_TAXPERT_WORKSPACE else "",
+        getting_started=GETTING_STARTED.format(
+            repo=REPO_NAME, port=DEV_PORT, segment=URL_SEGMENT
+        ),
+        taxpert_var=(
+            " / taxpert_repo_path / taxpert_path" if INCLUDE_TAXPERT_WORKSPACE else ""
+        ),
         docker_var=" (and docker-compose.yml, if you use it)" if INCLUDE_DOCKER else "",
         port=DEV_PORT,
         segment=URL_SEGMENT,

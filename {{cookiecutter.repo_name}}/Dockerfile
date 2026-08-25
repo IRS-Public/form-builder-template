@@ -100,13 +100,23 @@ COPY --from=build /build/{{ cookiecutter.repo_name }}/out /usr/share/nginx/html
 # its own :80. docker-compose.yml maps {{ cookiecutter.dev_port }}:80 and passes the same number back in, so change
 # the two together. The base path is baked into the generated site, so it is written in rather than
 # configured.
+# APP_DEV_SURFACES is empty here and set by the dev overlay. The prod-like image builds with no
+# flags at all, so it has no Author Mode page and no workspace to speak of — printing those
+# addresses unconditionally would advertise two URLs that 404 in exactly the image meant to be the
+# product. One variable rather than one per surface: they all arrive together, from `make up`.
 ENV APP_PORT={{ cookiecutter.dev_port }}
+ENV APP_DEV_SURFACES=""
 COPY --chmod=0755 <<'EOF' /docker-entrypoint.d/99-print-url.sh
 #!/bin/sh
 # The dev overlay points nginx at a volume the watcher fills in later, so this can legitimately start
 # with an empty web root. Say so rather than printing an address that 404s for the next few minutes.
 printf '\n\033[32m\033[1m✓\033[0m \033[1m{{ cookiecutter.project_name }}\033[0m \033[36mready\033[0m\n'
-printf '  \033[1mLocal:\033[0m   \033[36mhttp://localhost:%s/app/{{ cookiecutter.url_segment }}/\033[0m\n' "$APP_PORT"
+printf '  \033[1mFlow:\033[0m            \033[36mhttp://localhost:%s/app/{{ cookiecutter.url_segment }}/\033[0m\n' "$APP_PORT"
+if [ -n "$APP_DEV_SURFACES" ]; then
+  printf '  \033[1mAuthor Mode:\033[0m     \033[36mhttp://localhost:%s/app/{{ cookiecutter.url_segment }}/author/\033[0m\n' "$APP_PORT"
+  printf '  \033[1mBrowse All:\033[0m      \033[36mhttp://localhost:%s/app/{{ cookiecutter.url_segment }}/all-screens/\033[0m\n' "$APP_PORT"
+  printf '  \033[1mFact Explorer:\033[0m   \033[36mhttp://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}\033[0m\n'
+fi
 if [ ! -f /usr/share/nginx/html/app/{{ cookiecutter.url_segment }}/index.html ]; then
   printf '  \033[33m⚠ no site in the web root yet — the watcher is still generating it; refresh once it lands\033[0m\n'
 fi

@@ -19,15 +19,21 @@ services:
   {{ cookiecutter.repo_name }}:
     volumes:
       - app-out:/usr/share/nginx/html
+    environment:
+      # Unlocks the Author Mode / Browse All / Fact Explorer lines in the startup banner. The flags
+      # on the watcher below are what actually generate those pages, and this says so out loud —
+      # set here rather than in the Dockerfile so the prod-like image, which passes no flags, does
+      # not advertise pages it never built.
+      APP_DEV_SURFACES: "1"
 
   # The watcher. `target: build` stops at the stage that has sbt, the sibling libraries in the local
   # Ivy cache and the vendored assets already in place — the image's own `sbt run` at that stage
   # doubles as a warm compile cache, so the first `~run` here is seconds rather than minutes.
   #
-  # The flags mirror `make dev` minus --serve: the in-process server binds localhost inside the
-  # container and would not be reachable through a published port, so nginx above does the serving.
-  # Keep the two in step — a flag added to `make dev` and not here is a surface that exists natively
-  # and silently does not exist in Docker.
+  # The flags mirror `make dev-author` minus --serve: the in-process server binds localhost inside
+  # the container and would not be reachable through a published port, so nginx above does the
+  # serving. Keep the two in step — a flag added to `make dev` and not here is a surface that exists
+  # natively and silently does not exist in Docker.
   {{ cookiecutter.repo_name }}-watch:
     build:
       context: .
@@ -40,7 +46,28 @@ services:
     working_dir: /build/{{ cookiecutter.repo_name }}
     environment:
       SBT_OPTS: "-Xmx2g"
-    command: ["sbt", "~run --auditMode --allScreens --scenarioMode"]
+
+    # Author Mode's API, and the only port this stack opens besides the site itself.
+    #
+    # 127.0.0.1 rather than a bare port, deliberately. This API patches the flow XML and the fact
+    # dictionary *on disk* through the bind mount below, so it is a write endpoint into your working
+    # tree; published bare it would accept writes from anything that can route to this machine. The
+    # loopback binding is the same posture `make dev-author` gets for free by listening on localhost.
+    ports:
+      - "127.0.0.1:{{ cookiecutter.author_port }}:{{ cookiecutter.author_port }}"
+
+    # -Dsmol.author.host=0.0.0.0 is what makes that mapping reach anything: the API defaults to
+    # localhost, which inside a container is the container, so a published port would forward to a
+    # socket nobody is listening on and the editor would sit on "Connecting to the authoring
+    # server…" forever. FormBuilder.scala says as much where it reads the property. The narrow bind
+    # moves to the host side of the mapping, above, which is why both halves have to be here.
+    command:
+      [
+        "sbt",
+        "-Dsmol.author.host=0.0.0.0",
+        "-Dsmol.author.port={{ cookiecutter.author_port }}",
+        "~run --auditMode --allScreens --scenarioMode --authorMode",
+      ]
     volumes:
       # This app's own source, live — sbt's watcher picks up an edit on the host immediately.
       - .:/build/{{ cookiecutter.repo_name }}

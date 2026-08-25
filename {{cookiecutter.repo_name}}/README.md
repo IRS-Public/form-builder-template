@@ -54,22 +54,51 @@ that for you. Neither library is published to a remote artifact registry, so pub
 from each checkout is the only route to them.
 
 ## Getting started
+{% if cookiecutter.include_docker == 'yes' %}
+```bash
+make up           # http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecutter.url_segment }}/
+```
 
+That is the whole of it — no JDK, no sbt, no node. It builds the sibling libraries, generates the
+site, serves it, and leaves an `sbt ~run` watcher regenerating on every edit. Three surfaces come
+up together:
+
+| | Where | Served by |
+|---|---|---|
+| The flow | `http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecutter.url_segment }}/` | this stack's nginx |{% if cookiecutter.include_all_screens == 'yes' %}
+| Browse All | `http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecutter.url_segment }}/all-screens/` | this stack's nginx |{% endif %}
+| Author Mode | `http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecutter.url_segment }}/author/` | this stack, API on `127.0.0.1:{{ cookiecutter.author_port }}` |{% if cookiecutter.include_fact_explorer == 'yes' %}
+| Fact Explorer | `http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}` | the **taxpert** stack |{% endif %}
+
+Author Mode's API writes to `flow/*.xml` and `facts/*.xml` in this working tree, which is why it is
+published on `127.0.0.1` rather than on every interface. The watcher regenerates the site from those
+edits, so a save in the browser turns into a changed page a moment later.
+{% if cookiecutter.include_fact_explorer == 'yes' %}
+Fact Explorer is the one surface that is not this project's. It holds every application at once, so
+there is one instance beside them all rather than one per app. `make up` writes a bind mount for
+this repository into `{{ cookiecutter.taxpert_repo_path }}/docker-compose.apps.d/` and starts it —
+see `scripts/register-with-taxpert.sh`, and `make unregister-explorer` before you move or delete
+this repo. (A symlink into `taxpert/apps/` would not work here: a bind mount carries the link rather
+than its target, so the app would silently fail to appear.)
+{% endif %}
+To run it natively instead:
+
+```bash
+make bootstrap    # once: publish the libraries, install deps, vendor their assets
+make dev          # same URL, same flags, minus Author Mode — use `make dev-author` for that
+```
+{% else %}
 ```bash
 make bootstrap    # once: publish the libraries, install deps, vendor their assets
 make dev          # http://localhost:{{ cookiecutter.dev_port }}/app/{{ cookiecutter.url_segment }}/
 ```
-{% if cookiecutter.include_docker == 'yes' %}
-Or skip the local toolchain entirely with `make up`, which builds the libraries, generates the site,
-serves it, and leaves an `sbt ~run` watcher regenerating on every edit. Same URL, same developer
-surfaces.
 {% endif %}
 `make help` lists every target. The ones you will use:
 
 | Target | What it does |
 |---|---|
 | `make dev` | Dev server with the developer surfaces this app was generated with, watching for changes. |
-| `make dev-author` | The same, plus Author Mode: edit flow text and fact values from the browser, backed by a local API on port 3004. |
+| `make dev-author` | The same, plus Author Mode: edit flow text and fact values from the browser, backed by a local API on port {{ cookiecutter.author_port }}. |
 | `make dev-one-question` | The same, split into one question per screen. |
 | `make debug` | The same, with a JVM debug port on 5005. |
 | `make site` | The production build into `./out`. No flags, so the flow and nothing else. |
@@ -83,6 +112,9 @@ surfaces.
 {%- endif %}
 {%- if cookiecutter.include_docker == 'yes' %}
 | `make up` / `down` / `logs` / `ps` / `rebuild` | The Docker stack. `rebuild` is the escape hatch for a stale sibling library. |
+{%- endif %}
+{%- if cookiecutter.include_docker == 'yes' and cookiecutter.include_fact_explorer == 'yes' %}
+| `make register-explorer` / `unregister-explorer` | Add or remove this app's mount in the taxpert stack's Fact Explorer. `up` runs the first for you. |
 {%- endif %}
 
 The `copy-fg`{% if cookiecutter.include_taxpert_workspace == 'yes' %}, `copy-shared-ui`{% endif %} and `copy-uswds` targets regenerate the vendored mirrors under
@@ -108,7 +140,10 @@ fact-explorer.app.json          this app, as Fact Explorer discovers it
 Dockerfile                      three stages: publish the libraries, generate the site, serve it
 nginx.conf                      the runtime web server, over the generator's ./out
 docker-compose.yml              the prod-like stack
-docker-compose.override.yml     the dev overlay: nginx plus an `sbt ~run` watcher
+docker-compose.override.yml     the dev overlay: nginx plus an `sbt ~run` watcher with Author Mode
+{%- endif %}
+{%- if cookiecutter.include_docker == 'yes' and cookiecutter.include_fact_explorer == 'yes' %}
+scripts/register-with-taxpert.sh  what `make up` runs to mount this repo into Fact Explorer
 {%- endif %}
 ```
 

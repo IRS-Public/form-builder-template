@@ -1,4 +1,8 @@
 PORT ?= {{ cookiecutter.dev_port }}
+# Author Mode's API. Its own port, and its own answer at generation time, because two generated
+# apps on one machine cannot both hold it — and the generated page tells the browser which one to
+# call, so the two follow this together (see AUTHOR_PORT in form-builder's author-mode.js).
+AUTHOR_PORT ?= {{ cookiecutter.author_port }}
 DEBUGGER_PORT ?= 5005
 RESOURCES_DIR := ./src/main/resources/{{ cookiecutter.app_id }}
 OUTPUT_DIR := ./out
@@ -44,8 +48,8 @@ dev-one-question: copy-fg copy-shared-ui copy-uswds ## Same as `dev`, one questi
 	sbt -Dsmol.port=$(PORT) '~run --serve --auditMode --allScreens --singleQuestionPerScreen --scenarioMode'
 
 .PHONY: dev-author
-dev-author: copy-fg copy-shared-ui copy-uswds ## Same as `dev`, with Author Mode editing enabled on port 3004
-	sbt -Dsmol.port=$(PORT) -Dsmol.author.port=3004 '~run --serve --auditMode --allScreens --scenarioMode --authorMode'
+dev-author: copy-fg copy-shared-ui copy-uswds ## Same as `dev`, with Author Mode editing enabled on $(AUTHOR_PORT)
+	sbt -Dsmol.port=$(PORT) -Dsmol.author.port=$(AUTHOR_PORT) '~run --serve --auditMode --allScreens --scenarioMode --authorMode'
 
 .PHONY: debug
 debug: copy-fg copy-shared-ui copy-uswds ## Same as `dev`, but also opens a port to attach a debugger
@@ -68,12 +72,34 @@ site: copy-fg copy-shared-ui copy-uswds ## Build the site for production, into .
 # target that hid them would be one more thing to read before you could use either.
 
 .PHONY: up
-up: ## Build (first run) and start the whole stack, with hot reload
+up: register-explorer ## Build (first run) and start the whole stack, with hot reload
+	@# Three surfaces come up together, and only the first two are this compose project's:
+	@#   the flow          http://localhost:$(PORT)/app/{{ cookiecutter.url_segment }}/
+	@#   Author Mode       http://localhost:$(PORT)/app/{{ cookiecutter.url_segment }}/author/  (API on 127.0.0.1:$(AUTHOR_PORT))
+	@#   Fact Explorer     http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}         (taxpert's stack)
+	@# The third is a prerequisite rather than a service here because Fact Explorer holds every app
+	@# at once — one instance beside them all, not one per app fighting over port 5180.
 	docker compose up --build
+
+.PHONY: register-explorer
+register-explorer: ## Mount this app into the Fact Explorer in the taxpert stack, and start it
+	@# Idempotent, and non-fatal when taxpert is not checked out — see the script's header for why
+	@# this is a bind-mount fragment rather than the `ln -s` that taxpert/apps/README.md offers.
+	@./scripts/register-with-taxpert.sh
 
 .PHONY: down
 down: ## Stop and remove the stack
+	@# Leaves the Fact Explorer registration in place: that stack holds every app at once, and
+	@# stopping this one is no reason to take this app out of its menu. `make unregister-explorer`
+	@# is the deliberate removal, for a repo you are about to move or delete.
 	docker compose down
+
+.PHONY: unregister-explorer
+unregister-explorer: ## Remove this app's mount from the taxpert stack's Fact Explorer
+	@# Worth doing before deleting or moving this repository. A fragment naming a path that no
+	@# longer exists fails `docker compose up` for taxpert's whole stack, not just this app's entry.
+	rm -f {{ cookiecutter.taxpert_repo_path }}/docker-compose.apps.d/{{ cookiecutter.app_id }}.yml
+	@echo "==> unregistered {{ cookiecutter.app_id }}; restart Fact Explorer for it to drop out of the menu"
 
 .PHONY: logs
 logs: ## Tail the logs from every service

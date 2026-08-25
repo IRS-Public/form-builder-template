@@ -7,11 +7,13 @@
   "brand": "{{ cookiecutter.project_name }}",
   "storage_prefix": "{{ cookiecutter.app_id }}",
   "dev_port": "3010",
+  "author_port": "3004",
   "form_builder_version": "0.1.0-SNAPSHOT",
   "factgraph_version": "3.1.0-SNAPSHOT",
   "fact_graph_path": "../fact-graph",
   "form_builder_path": "../form-builder",
-  "taxpert_path": "../taxpert/packages/ui",
+  "taxpert_repo_path": "../taxpert",
+  "taxpert_path": "{{ cookiecutter.taxpert_repo_path }}/packages/ui",
   "include_all_screens": [
     "yes",
     "no"
