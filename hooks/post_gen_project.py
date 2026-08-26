@@ -22,6 +22,7 @@ REPO_NAME = "{{ cookiecutter.repo_name }}"
 APP_ID = "{{ cookiecutter.app_id }}"
 URL_SEGMENT = "{{ cookiecutter.url_segment }}"
 DEV_PORT = "{{ cookiecutter.dev_port }}"
+AUTHOR_PORT = "{{ cookiecutter.author_port }}"
 FACT_GRAPH_PATH = "{{ cookiecutter.fact_graph_path }}"
 FORM_BUILDER_PATH = "{{ cookiecutter.form_builder_path }}"
 TAXPERT_PATH = "{{ cookiecutter.taxpert_path }}"
@@ -184,6 +185,7 @@ if not INCLUDE_TAXPERT_WORKSPACE:
         "Makefile",
         "copy-shared-ui:",
         "check-shared-ui:",
+        "link-taxpert:",
         "SHARED_UI_SRC",
     )
     replace_in(
@@ -382,14 +384,14 @@ if INCLUDE_DOCKER:
     # until something is already wrong. Author Mode's API is the one thing worth a sentence: it
     # writes to the flow XML and the fact dictionary in this working tree, which is why it is bound
     # to loopback rather than published.
-    NEXT_STEPS += """
+    NEXT_STEPS += f"""
   `make up` needs no local toolchain at all — no JDK, no sbt, no node. It builds the sibling
   libraries, generates the site, serves it, and leaves a `sbt ~run` watcher regenerating it on
   every edit. Refresh the browser after a change.
 
-  Author Mode comes up with it, at .../author/, backed by an API on 127.0.0.1:3004. That API edits
-  the flow XML and the fact dictionary on disk in this repo, so it is deliberately reachable only
-  from this machine.
+  Author Mode comes up with it, at .../author/, backed by an API on 127.0.0.1:{AUTHOR_PORT}. That
+  API edits the flow XML and the fact dictionary on disk in this repo, so it is deliberately
+  reachable only from this machine.
 """
 
 if INCLUDE_FACT_EXPLORER:

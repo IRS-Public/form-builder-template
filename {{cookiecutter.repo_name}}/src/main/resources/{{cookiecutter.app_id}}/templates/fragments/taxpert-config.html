@@ -75,6 +75,20 @@
                             { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
                         ],
                     },
+{% if cookiecutter.include_fact_explorer == 'yes' %}
+                    // Fact Explorer holds every application beside this one, so the app id is part of
+                    // the URL: a bare /fact-explorer lands on whichever is default rather than this
+                    // one. Absolute, because it is served by the taxpert stack rather than this app.
+                    { id: 'fact-explorer', label: 'Fact Explorer', href: 'http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}' },
+{% endif %}
+                    // Only when this site was built with --authorMode, which is what generates the
+                    // page: `make up` and `make dev-author` pass it, a plain `make dev` and the
+                    // production build do not. Gated on the build flag rather than offered always,
+                    // because this file's rule above is that a menu which offers a 404 is worse than
+                    // a short one. A `//` comment, never an HTML one — see the note in `apps` below.
+                    ...((/*[[${flags.authorMode}]]*/ false) ? [
+                        { id: 'authoring-suite', label: 'Authoring Suite', href: /*[[|${basePath}/author/|]]*/ '' },
+                    ] : []),
                 ],
 
                 // Where each tool button in the bar applies. One generated page backs both listings,
@@ -82,7 +96,7 @@
                 // Display applies there — nothing the other two do depends on an answer. Path Mode is
                 // a reading of one Fact Graph, so all three do.
                 toolsByDestination: [
-                    { id: 'scenario', label: 'Scenario', icon: 'tune', destinations: ['product-experience', 'path-mode'] },
+                    { id: 'scenario', label: 'Scenario', icon: 'tune', destinations: ['product-experience', 'path-mode'{% if cookiecutter.include_fact_explorer == 'yes' %}, 'fact-explorer'{% endif %}] },
                     { id: 'display', label: 'Display', icon: 'visibility', destinations: ['product-experience', 'path-mode', 'browse-all'] },
                     { id: 'tools', label: 'Tools', icon: 'build', destinations: ['product-experience', 'path-mode'] },
                 ],
@@ -112,6 +126,12 @@
                             { id: 'product-experience', label: 'Product Experience', href: /*[[|${basePath}/|]]*/ '' },
                             { id: 'path-mode', label: 'Path Mode', href: /*[[|${basePath}/all-screens/?mode=path|]]*/ '' },
                             { id: 'browse-all', label: 'Browse All', href: /*[[|${basePath}/all-screens/|]]*/ '' },
+{% if cookiecutter.include_fact_explorer == 'yes' %}
+                            { id: 'fact-explorer', label: 'Fact Explorer', href: 'http://localhost:5180/fact-explorer/{{ cookiecutter.app_id }}' },
+{% endif %}
+                            ...((/*[[${flags.authorMode}]]*/ false) ? [
+                                { id: 'authoring-suite', label: 'Authoring Suite', href: /*[[|${basePath}/author/|]]*/ '' },
+                            ] : []),
                         ],
                     },
                 ],

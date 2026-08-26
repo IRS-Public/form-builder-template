@@ -1,14 +1,17 @@
 # Form Builder Template
 
 A [cookiecutter](https://cookiecutter.readthedocs.io/) template that generates a new, multi-language
-questionnaire application built on [Fact Graph](https://github.com/IRS-Public/form-builder) and
+questionnaire application built on the [Fact Graph](https://github.com/IRS-Public/fact-graph) and
 [Form Builder](https://github.com/IRS-Public/form-builder) Scala libraries. Form Builder Template deliberately generates a lightweight application. It assumes you want to model
 complex business logic with the Fact Graph, including but not limited to a tax code, without building your own rules engine,
 presentation layer, navigation, internationalization, or styling components to meet Section 508 compliance. Applications generated with this template include the flow parser, site generators, Thymeleaf engine, node templates, locales,
 browser theme, flow runtime and (optionally) a web-GUI to update presentation and business logic, all out of the box.
 
-See the [onboarding guide](docs/ONBOARDING.md) to get started with a new Form Builder application. See [Form Builder 
+Start with the [template reference](docs/ONBOARDING.md) for what this
+template asks and what it generates. See [Form Builder
 Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template. To understand the difference between Taxpert, Form Builder and the Fact Graph, see [this doc](https://github.com/IRS-Public/taxpert/blob/main/docs/adr/taxpert-form-builder-fact-graph.md).
+Finally, see the [ecosystem QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/QUICKSTART.md) to
+see how all the pieces work together and running a generated application.  
 
 ## Where this fits
 
@@ -17,7 +20,7 @@ Examples](https://github.com/IRS-Public/form-builder-examples) for example appli
 | [`fact-graph`](https://github.com/IRS-Public/fact-graph) | `gov.irs::factgraph`, the rules engine. Cross-compiled: a JVM jar this library builds against, and a Scala.js bundle the browser runs. |
 | `form-builder` | `gov.irs::form-builder`, the presentation generator: parsers, the Thymeleaf engine, node templates, locales, RELAX NG schemas, the theme, the flow runtime, and Author Mode. |
 | [`taxpert`](https://github.com/IRS-Public/taxpert) | The workspace UI (`taxpert` on npm, in that repo's `packages/ui`): global nav, audit panel, tool panels. Optional, and an application can ship without it. That repo's `packages/fact-explorer` is a React and Vite SPA that visualizes any Form Builder app's flow and facts as a graph, reading the JSON this library emits under `--formBuilderGraph`. |
-| [`form-builder-template`](https://github.com/IRS-Public/form-builder-template) | A cookiecutter template that generates a new Form Builder app, with optional extensions like Taxpert. |
+| `form-builder-template` | A cookiecutter template that generates a new Form Builder app, with optional extensions like Taxpert. |
 | [`form-builder-examples`](https://github.com/IRS-Public/form-builder-examples) | Reference applications built on the libraries above. |
 
 Taxpert and other extensions such as Author Mode, Fact Explorer, and Docker are optional. An

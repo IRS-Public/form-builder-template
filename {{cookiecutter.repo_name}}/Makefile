@@ -133,6 +133,29 @@ copy-fg: ## Copy the compiled Fact Graph bundle from the fact-graph checkout
 		echo "    (run 'cd {{ cookiecutter.fact_graph_path }} && sbt fastOptJS' to refresh it)"; \
 	fi
 
+# ── A taxpert checkout somewhere other than {{ cookiecutter.taxpert_path }} ──────────────
+#
+# package.json depends on `taxpert` at `file:{{ cookiecutter.taxpert_path }}`, the answer this app was
+# generated with. That is what a plain `npm install` resolves, and `make bootstrap` runs it for you.
+#
+# When your checkout lives somewhere else — a shared one beside a different parent, a worktree, a
+# branch you are testing an app against — install it from there without editing package.json:
+#
+#   make link-taxpert TAXPERT_UI=/path/to/taxpert/packages/ui
+#
+# `--no-save`, so the committed dependency keeps naming the conventional location and this stays a
+# local decision. SHARED_UI_SRC reads node_modules either way, so copy-shared-ui and check-shared-ui
+# work unchanged.
+TAXPERT_UI ?=
+
+.PHONY: link-taxpert
+link-taxpert: ## Install the workspace UI from a taxpert checkout elsewhere (set TAXPERT_UI=...)
+	@test -n "$(TAXPERT_UI)" || { \
+	  echo "error: set TAXPERT_UI=/path/to/taxpert/packages/ui"; exit 1; }
+	@test -d "$(TAXPERT_UI)/src" || { \
+	  echo "error: $(TAXPERT_UI) has no src/ — is that the packages/ui directory?"; exit 1; }
+	npm install --no-save "file:$(TAXPERT_UI)"
+
 .PHONY: copy-shared-ui
 copy-shared-ui: ## Regenerate the vendored taxpert mirror from node_modules
 	# The vendored copy is a generated mirror of taxpert's src/ bundle dirs, each one broken down

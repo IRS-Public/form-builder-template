@@ -4,9 +4,11 @@ A [cookiecutter](https://cookiecutter.readthedocs.io/) template that generates a
 application. Nothing is built in this repository. It holds the questions, the files as they will be
 rendered, and one post-generation hook that prunes whatever the answers turned off.
 
-[docs/ONBOARDING.md](docs/ONBOARDING.md) is the authoritative reference for the requirements, the
-questions, what each answer changes, and where the libraries resolve from. Read it before making a
-change.
+[docs/ONBOARDING.md](docs/ONBOARDING.md) is the authoritative reference for the questions, what each
+answer changes, and where the libraries resolve from. Read it before making a change. Setup and run
+instructions for a generated application live in one place for the whole ecosystem, the
+[QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/QUICKSTART.md) in the taxpert
+repository, so do not add them here.
 
 ## Where this fits
 
@@ -43,7 +45,7 @@ file into the application's `templates/`, a chrome string by declaring that key 
 | `cookiecutter.json` | The questions, their defaults, the derived values (`__package_path`, `__js_name`), and `_copy_without_render` |
 | `hooks/post_gen_project.py` | Renders first, then prunes. All of the conditional logic lives here |
 | `{{cookiecutter.repo_name}}/` | The application as it will be generated: `build.sbt`, `Makefile`, `src/main/scala/.../Main.scala`, `src/main/resources/{{cookiecutter.app_id}}/{flow,facts,locales,templates,scenarios,website-static}/`, Docker files, CI workflow |
-| `docs/ONBOARDING.md` | Requirements, quickstart, the questions, layout, gotchas |
+| `docs/ONBOARDING.md` | The questions, what each answer changes, the generated layout, gotchas |
 
 ## How the conditionals work
 
