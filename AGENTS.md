@@ -7,7 +7,7 @@ rendered, and one post-generation hook that prunes whatever the answers turned o
 [docs/ONBOARDING.md](docs/ONBOARDING.md) is the authoritative reference for the questions, what each
 answer changes, and where the libraries resolve from. Read it before making a change. Setup and run
 instructions for a generated application live in one place for the whole ecosystem, the
-[QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/QUICKSTART.md) in the taxpert
+[QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/docs/QUICKSTART.md) in the taxpert
 repository, so do not add them here.
 
 ## Where this fits
@@ -18,7 +18,7 @@ repository, so do not add them here.
 | [form-builder](https://github.com/IRS-Public/form-builder) | `gov.irs::form-builder`, the scaffold. Parsers, generators, node templates, chrome locales, the theme, the flow runtime, Author Mode. |
 | [taxpert](https://github.com/IRS-Public/taxpert) | The optional workspace UI and its companion services. |
 | **form-builder-template** (here) | Generates an application over those libraries. |
-| [form-builder-examples](https://github.com/IRS-Public/form-builder-examples) | The two reference applications. |
+| [form-builder-examples](https://github.com/IRS-Public/form-builder-examples) | The reference applications: Credit Assistant (EITC), the Tax Withholding Estimator, and Benefits Enrollment. |
 
 ## Deciding where a change belongs
 

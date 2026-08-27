@@ -10,7 +10,7 @@ browser theme, flow runtime and (optionally) a web-GUI to update presentation an
 Start with the [template reference](docs/ONBOARDING.md) for what this
 template asks and what it generates. See [Form Builder
 Examples](https://github.com/IRS-Public/form-builder-examples) for example applications built using this template. To understand the difference between Taxpert, Form Builder and the Fact Graph, see [this doc](https://github.com/IRS-Public/taxpert/blob/main/docs/adr/taxpert-form-builder-fact-graph.md).
-Finally, see the [ecosystem QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/QUICKSTART.md) to
+Finally, see the [ecosystem QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/docs/QUICKSTART.md) to
 see how all the pieces work together and running a generated application.  
 
 ## Where this fits

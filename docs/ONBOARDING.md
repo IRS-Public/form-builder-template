@@ -5,7 +5,7 @@ the generated application contains, and where it expects the libraries to be.
 
 This guide covers how to quickstart generating an application. It does not cover how to run the application 
 or leverage tools like taxpert. For that, see
-[QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/QUICKSTART.md) in the taxpert
+[QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/docs/QUICKSTART.md) in the taxpert
 repository, which covers prerequisites, the Docker path, the native path, and what to run after
 changing a library so the change reaches everything that consumes it.
 
@@ -23,7 +23,7 @@ cd ~
 git clone https://github.com/IRS-Public/fact-graph.git
 git clone https://github.com/IRS-Public/form-builder.git
 git clone https://github.com/IRS-Public/taxpert.git      # optional, for the workspace and Fact Explorer
-git clone https://github.com/IRS-Public/form-builder-template.git      # optional, for the workspace and Fact Explorer
+git clone https://github.com/IRS-Public/form-builder-template.git      # optional, to run this template from a local checkout
 
 cookiecutter form-builder-template   # or a path to a local checkout
 ```
@@ -34,13 +34,18 @@ named by your `repo_name` answer, and cookiecutter's default output directory is
 post-generation hook detects that one case and moves the application up a level. An explicit
 `--output-dir` is left alone.
 
-Then, in the new application:
+Then pick one of the two ways to run the new application. Use either the Docker path or the native
+path, not both.
 
 ```bash
 cd ~/my-application
-make up           # Docker: builds both libraries in the image, no local toolchain
-make bootstrap    # Native build: Don't run both make up and make bootstrap/dev -- just one or the other
-make dev
+make up                     # Docker: builds both libraries in the image, no local toolchain needed
+```
+
+```bash
+cd ~/my-application
+make bootstrap              # Native: publish both libraries and vendor their assets, once
+make dev                    # then serve at http://localhost:<dev_port>/app/<url_segment>/
 ```
 
 ## The questions
@@ -221,8 +226,8 @@ repository at `packages/fact-explorer`. Its `build-registry` script globs
 
 In Docker a symlink does not work, because a bind mount carries the link rather than its target.
 `make up` runs `make register-explorer`, which writes a compose fragment into the taxpert stack
-instead. The [QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/QUICKSTART.
-md#how-fact-explorer-finds-an-application) covers both discovery paths.
+instead. The [QUICKSTART.md](https://github.com/IRS-Public/taxpert/blob/main/docs/QUICKSTART.md#how-fact-explorer-finds-an-application)
+covers both discovery paths.
 
 Natively, putting the repository there as a clone or a symlink is the whole of the wiring:
 
